@@ -71,8 +71,13 @@ export class MockClients implements Clients {
   }
 
   async claim(): Promise<any> {}
+
+  openWindow(url: string): Promise<WindowClient> {
+    return <Promise<WindowClient>>{};
+  }
 }
 
+// @ts-ignore
 export class SwTestHarness implements ServiceWorkerGlobalScope, Adapter, Context {
   readonly cacheNamePrefix: string;
   readonly clients = new MockClients();
@@ -81,6 +86,7 @@ export class SwTestHarness implements ServiceWorkerGlobalScope, Adapter, Context
 
   private selfMessageQueue: any[] = [];
   autoAdvanceTime = false;
+  readonly location: Location = <Location>{};
   // TODO(issue/24571): remove '!'.
   unregistered !: boolean;
   readonly notifications: {title: string, options: Object}[] = [];

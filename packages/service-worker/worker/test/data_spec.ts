@@ -12,6 +12,7 @@ import {Manifest} from '../src/manifest';
 import {MockRequest} from '../testing/fetch';
 import {MockFileSystemBuilder, MockServerStateBuilder, tmpHashTableForFs} from '../testing/mock';
 import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
+import {AsyncLocalStorage} from '../src/local-storage';
 
 (function() {
   // Skip environments that don't support the minimum APIs needed to run the SW tests.
@@ -120,7 +121,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
     let driver: Driver;
     beforeEach(async() => {
       scope = new SwTestHarnessBuilder().withServerState(server).build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
 
       // Initialize.
       expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');

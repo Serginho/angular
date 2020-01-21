@@ -9,12 +9,20 @@
 import {NgswCommChannel} from '@angular/service-worker/src/low_level';
 import {SwPush} from '@angular/service-worker/src/push';
 import {SwUpdate} from '@angular/service-worker/src/update';
-import {MockServiceWorkerContainer, MockServiceWorkerRegistration} from '@angular/service-worker/testing/mock';
+import {
+  MockServiceWorkerContainer,
+  MockServiceWorkerRegistration
+} from '@angular/service-worker/testing/mock';
 import {CacheDatabase} from '@angular/service-worker/worker/src/db-cache';
 import {Driver} from '@angular/service-worker/worker/src/driver';
 import {Manifest} from '@angular/service-worker/worker/src/manifest';
 import {MockRequest} from '@angular/service-worker/worker/testing/fetch';
-import {MockFileSystemBuilder, MockServerStateBuilder, tmpHashTableForFs} from '@angular/service-worker/worker/testing/mock';
+import {
+  MockAsyncLocalStorage,
+  MockFileSystemBuilder,
+  MockServerStateBuilder,
+  tmpHashTableForFs
+} from '@angular/service-worker/worker/testing/mock';
 import {SwTestHarness, SwTestHarnessBuilder} from '@angular/service-worker/worker/testing/scope';
 import {Observable} from 'rxjs';
 import {take} from 'rxjs/operators';
@@ -77,13 +85,16 @@ import {take} from 'rxjs/operators';
     let reg: MockServiceWorkerRegistration;
     let scope: SwTestHarness;
     let driver: Driver;
+    let storageMock: MockAsyncLocalStorage;
 
     beforeEach(async() => {
       // Fire up the client.
       mock = new MockServiceWorkerContainer();
       comm = new NgswCommChannel(mock as any);
       scope = new SwTestHarnessBuilder().withServerState(server).build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      storageMock = new MockAsyncLocalStorage();
+
+      driver = new Driver(<any>scope, scope, new CacheDatabase(<any>scope, scope), storageMock);
 
       scope.clients.add('default');
       scope.clients.getMock('default') !.queue.subscribe(msg => { mock.sendMessage(msg); });

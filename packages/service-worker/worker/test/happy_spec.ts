@@ -15,6 +15,7 @@ import {MockCache, clearAllCaches} from '../testing/cache';
 import {MockRequest} from '../testing/fetch';
 import {MockFileSystemBuilder, MockServerStateBuilder, tmpHashTableForFs} from '../testing/mock';
 import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
+import {AsyncLocalStorage} from '../src/local-storage';
 
 (function() {
   // Skip environments that don't support the minimum APIs needed to run the SW tests.
@@ -256,7 +257,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
       brokenServer.reset();
 
       scope = new SwTestHarnessBuilder().withServerState(server).build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
     });
 
     it('activates without waiting', async() => {
@@ -516,7 +517,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                   .withCacheState(scope.caches.dehydrate())
                   .withServerState(serverUpdate)
                   .build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
       expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
       await driver.initialized;
       serverUpdate.assertNoOtherRequests();
@@ -578,7 +579,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                   .withCacheState(scope.caches.dehydrate())
                   .withServerState(serverUpdate)
                   .build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
 
       expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
       expect(await makeRequest(scope, '/foo.txt', 'new')).toEqual('this is foo v2');
@@ -645,7 +646,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                   .withCacheState(scope.caches.dehydrate())
                   .withServerState(serverUpdate)
                   .build();
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
       expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
       await driver.initialized;
       serverUpdate.assertNoOtherRequests();
@@ -660,7 +661,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
       await driver.idle.empty;
       serverUpdate.clearRequests();
 
-      driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+      driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
       expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo v2');
 
       keys = await scope.caches.keys();
@@ -881,7 +882,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                              .withCacheState(initialCacheState)
                              .withServerState(serverState)
                              .build();
-        const newDriver = new Driver(newScope, newScope, new CacheDatabase(newScope, newScope));
+        const newDriver = new Driver(newScope, newScope, new CacheDatabase(newScope, newScope), <AsyncLocalStorage>{});
 
         await makeRequest(newScope, '/foo.txt', baseHref.replace(/\//g, '_'));
         await newDriver.initialized;
@@ -1023,7 +1024,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
 
         const state = scope.caches.dehydrate();
         scope = new SwTestHarnessBuilder().withCacheState(state).withServerState(server).build();
-        driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+        driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
         expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
         await driver.initialized;
         server.assertNoRequestFor('/unhashed/a.txt');
@@ -1048,7 +1049,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                     .withCacheState(scope.caches.dehydrate())
                     .withServerState(serverUpdate)
                     .build();
-        driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+        driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
         expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
         await driver.initialized;
 
@@ -1225,7 +1226,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
       it('does not crash with bad index hash', async() => {
         scope = new SwTestHarnessBuilder().withServerState(brokenServer).build();
         (scope.registration as any).scope = 'http://site.com';
-        driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+        driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
 
         expect(await makeRequest(scope, '/foo.txt')).toEqual('this is foo');
       });
@@ -1239,7 +1240,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                     .withCacheState(scope.caches.dehydrate())
                     .withServerState(brokenServer)
                     .build();
-        driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+        driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
         await driver.checkForUpdate();
 
         scope.advance(12000);
@@ -1361,7 +1362,7 @@ import {SwTestHarness, SwTestHarnessBuilder} from '../testing/scope';
                                .build();
 
           scope = new SwTestHarnessBuilder().withServerState(serverV5).build();
-          driver = new Driver(scope, scope, new CacheDatabase(scope, scope));
+          driver = new Driver(scope, scope, new CacheDatabase(scope, scope), <AsyncLocalStorage>{});
         });
 
         // Test this bug: https://github.com/angular/angular/issues/27209
