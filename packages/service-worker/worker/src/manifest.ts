@@ -16,6 +16,7 @@ export interface Manifest {
   appData?: {[key: string]: string};
   index: string;
   push?: PushConfig;
+  debug?: DebugConfig;
   assetGroups?: AssetGroupConfig[];
   dataGroups?: DataGroupConfig[];
   navigationUrls: {positive: boolean, regex: string}[];
@@ -23,6 +24,8 @@ export interface Manifest {
 }
 
 export interface PushConfig { url: string; }
+
+export interface DebugConfig { endpoint: string; }
 
 export interface AssetGroupConfig {
   name: string;

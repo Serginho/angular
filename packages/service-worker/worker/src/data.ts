@@ -10,6 +10,7 @@ import {Adapter, Context} from './adapter';
 import {Database, Table} from './database';
 import {DebugHandler} from './debug';
 import {DataGroupConfig} from './manifest';
+import {DebugLogger} from './api';
 
 /**
  * A metadata record of how old a particular cached resource is.
@@ -244,7 +245,7 @@ export class DataGroup {
 
   constructor(
       private scope: ServiceWorkerGlobalScope, private adapter: Adapter,
-      private config: DataGroupConfig, private db: Database, private debugHandler: DebugHandler,
+      private config: DataGroupConfig, private db: Database, private debugHandler: DebugLogger,
       private prefix: string) {
     this.patterns = this.config.patterns.map(pattern => new RegExp(pattern));
     this.cache = this.scope.caches.open(`${this.prefix}:dynamic:${this.config.name}:cache`);

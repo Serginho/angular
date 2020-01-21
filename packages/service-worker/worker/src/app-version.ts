@@ -7,7 +7,7 @@
  */
 
 import {Adapter, Context} from './adapter';
-import {CacheState, UpdateCacheStatus, UpdateSource} from './api';
+import {CacheState, DebugLogger, UpdateCacheStatus, UpdateSource} from './api';
 import {AssetGroup, LazyAssetGroup, PrefetchAssetGroup} from './assets';
 import {DataGroup} from './data';
 import {Database} from './database';
@@ -61,7 +61,7 @@ export class AppVersion implements UpdateSource {
 
   constructor(
       private scope: ServiceWorkerGlobalScope, private adapter: Adapter, private database: Database,
-      private idle: IdleScheduler, private debugHandler: DebugHandler, readonly manifest: Manifest,
+      private idle: IdleScheduler, private debugHandler: DebugLogger, readonly manifest: Manifest,
       readonly manifestHash: string) {
     // The hashTable within the manifest is an Object - convert it to a Map for easier lookups.
     Object.keys(this.manifest.hashTable).forEach(url => {
