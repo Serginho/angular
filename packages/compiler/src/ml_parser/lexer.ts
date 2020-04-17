@@ -101,6 +101,10 @@ export interface TokenizeOptions {
    * included in source-map segments.  A common example is whitespace.
    */
   leadingTriviaChars?: string[];
+  /**
+   * If true, do not convert CRLF to LF.
+   */
+  preserveLineEndings?: boolean;
 }
 
 export function tokenize(
@@ -134,6 +138,7 @@ class _Tokenizer {
   private _currentTokenType: TokenType|null = null;
   private _expansionCaseStack: TokenType[] = [];
   private _inInterpolation: boolean = false;
+  private readonly _preserveLineEndings: boolean;
   tokens: Token[] = [];
   errors: TokenError[] = [];
 
@@ -153,6 +158,7 @@ class _Tokenizer {
         options.range || {endPos: _file.content.length, startPos: 0, startLine: 0, startCol: 0};
     this._cursor = options.escapedString ? new EscapedCharacterCursor(_file, range) :
                                            new PlainCharacterCursor(_file, range);
+    this._preserveLineEndings = options.preserveLineEndings || false;
     try {
       this._cursor.init();
     } catch (e) {
@@ -161,6 +167,9 @@ class _Tokenizer {
   }
 
   private _processCarriageReturns(content: string): string {
+    if (this._preserveLineEndings) {
+      return content;
+    }
     // http://www.w3.org/TR/html5/syntax.html#preprocessing-the-input-stream
     // In order to keep the original position in the source, we can not
     // pre-process it.
@@ -233,7 +242,7 @@ class _Tokenizer {
     this._currentTokenType = type;
   }
 
-  private _endToken(parts: string[], end = this._cursor.clone()): Token {
+  private _endToken(parts: string[], end?: CharacterCursor): Token {
     if (this._currentTokenStart === null) {
       throw new TokenError(
           'Programming error - attempted to end a token when there was no start to the token',
@@ -341,8 +350,7 @@ class _Tokenizer {
   private _requireCharCodeUntilFn(predicate: (code: number) => boolean, len: number) {
     const start = this._cursor.clone();
     this._attemptCharCodeUntilFn(predicate);
-    const end = this._cursor.clone();
-    if (end.diff(start) < len) {
+    if (this._cursor.diff(start) < len) {
       throw this._createError(
           _unexpectedCharacterErrorMsg(this._cursor.peek()), this._cursor.getSpan(start));
     }
@@ -739,7 +747,7 @@ function isNamedEntityEnd(code: number): boolean {
 }
 
 function isExpansionCaseStart(peek: number): boolean {
-  return peek === chars.$EQ || chars.isAsciiLetter(peek) || chars.isDigit(peek);
+  return peek !== chars.$RBRACE;
 }
 
 function compareCharCodeCaseInsensitive(code1: number, code2: number): boolean {
@@ -756,7 +764,7 @@ function mergeTextTokens(srcTokens: Token[]): Token[] {
   for (let i = 0; i < srcTokens.length; i++) {
     const token = srcTokens[i];
     if (lastDstToken && lastDstToken.type == TokenType.TEXT && token.type == TokenType.TEXT) {
-      lastDstToken.parts[0] ! += token.parts[0];
+      lastDstToken.parts[0]! += token.parts[0];
       lastDstToken.sourceSpan.end = token.sourceSpan.end;
     } else {
       lastDstToken = token;
@@ -812,7 +820,18 @@ class PlainCharacterCursor implements CharacterCursor {
       this.file = fileOrCursor.file;
       this.input = fileOrCursor.input;
       this.end = fileOrCursor.end;
-      this.state = {...fileOrCursor.state};
+
+      const state = fileOrCursor.state;
+      // Note: avoid using `{...fileOrCursor.state}` here as that has a severe performance penalty.
+      // In ES5 bundles the object spread operator is translated into the `__assign` helper, which
+      // is not optimized by VMs as efficiently as a raw object literal. Since this constructor is
+      // called in tight loops, this difference matters.
+      this.state = {
+        peek: state.peek,
+        offset: state.offset,
+        line: state.line,
+        column: state.column,
+      };
     } else {
       if (!range) {
         throw new Error(
@@ -830,21 +849,37 @@ class PlainCharacterCursor implements CharacterCursor {
     }
   }
 
-  clone(): PlainCharacterCursor { return new PlainCharacterCursor(this); }
+  clone(): PlainCharacterCursor {
+    return new PlainCharacterCursor(this);
+  }
 
-  peek() { return this.state.peek; }
-  charsLeft() { return this.end - this.state.offset; }
-  diff(other: this) { return this.state.offset - other.state.offset; }
+  peek() {
+    return this.state.peek;
+  }
+  charsLeft() {
+    return this.end - this.state.offset;
+  }
+  diff(other: this) {
+    return this.state.offset - other.state.offset;
+  }
 
-  advance(): void { this.advanceState(this.state); }
+  advance(): void {
+    this.advanceState(this.state);
+  }
 
-  init(): void { this.updatePeek(this.state); }
+  init(): void {
+    this.updatePeek(this.state);
+  }
 
   getSpan(start?: this, leadingTriviaCodePoints?: number[]): ParseSourceSpan {
     start = start || this;
+    let cloned = false;
     if (leadingTriviaCodePoints) {
-      start = start.clone() as this;
       while (this.diff(start) > 0 && leadingTriviaCodePoints.indexOf(start.peek()) !== -1) {
+        if (!cloned) {
+          start = start.clone() as this;
+          cloned = true;
+        }
         start.advance();
       }
     }
@@ -857,7 +892,9 @@ class PlainCharacterCursor implements CharacterCursor {
     return this.input.substring(start.state.offset, this.state.offset);
   }
 
-  charAt(pos: number): number { return this.input.charCodeAt(pos); }
+  charAt(pos: number): number {
+    return this.input.charCodeAt(pos);
+  }
 
   protected advanceState(state: CursorState) {
     if (state.offset >= this.end) {
@@ -890,7 +927,7 @@ class EscapedCharacterCursor extends PlainCharacterCursor {
       super(fileOrCursor);
       this.internalState = {...fileOrCursor.internalState};
     } else {
-      super(fileOrCursor, range !);
+      super(fileOrCursor, range!);
       this.internalState = this.state;
     }
   }
@@ -906,7 +943,9 @@ class EscapedCharacterCursor extends PlainCharacterCursor {
     this.processEscapeSequence();
   }
 
-  clone(): EscapedCharacterCursor { return new EscapedCharacterCursor(this); }
+  clone(): EscapedCharacterCursor {
+    return new EscapedCharacterCursor(this);
+  }
 
   getChars(start: this): string {
     const cursor = start.clone();

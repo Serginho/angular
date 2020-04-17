@@ -15,7 +15,7 @@ import {NodeJSFileSystem, setFileSystem} from '../src/ngtsc/file_system';
 import {getAngularPackagesFromRunfiles, resolveNpmTreeArtifact} from '../test/helpers';
 
 // TEST_TMPDIR is always set by Bazel.
-const tmpdir = process.env.TEST_TMPDIR !;
+const tmpdir = process.env.TEST_TMPDIR!;
 
 export function makeTempDir(): string {
   let dir: string;
@@ -57,6 +57,7 @@ function createTestSupportFor(basePath: string) {
     'newLine': ts.NewLineKind.LineFeed,
     'module': ts.ModuleKind.ES2015,
     'moduleResolution': ts.ModuleResolutionKind.NodeJs,
+    'enableIvy': false,
     'lib': Object.freeze([
       path.resolve(basePath, 'node_modules/typescript/lib/lib.es6.d.ts'),
     ]) as string[],
@@ -96,8 +97,11 @@ function createTestSupportFor(basePath: string) {
   }
 
   function writeFiles(...mockDirs: {[fileName: string]: string}[]) {
-    mockDirs.forEach(
-        (dir) => { Object.keys(dir).forEach((fileName) => { write(fileName, dir[fileName]); }); });
+    mockDirs.forEach((dir) => {
+      Object.keys(dir).forEach((fileName) => {
+        write(fileName, dir[fileName]);
+      });
+    });
   }
 
   function createCompilerOptions(overrideOptions: ng.CompilerOptions = {}): ng.CompilerOptions {
@@ -169,4 +173,10 @@ export function expectNoDiagnosticsInProgram(options: ng.CompilerOptions, p: ng.
 
 export function normalizeSeparators(path: string): string {
   return path.replace(/\\/g, '/');
+}
+
+const STRIP_ANSI = /\x1B\x5B\d+m/g;
+
+export function stripAnsi(diags: string): string {
+  return diags.replace(STRIP_ANSI, '');
 }

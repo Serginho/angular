@@ -6,13 +6,14 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import {ɵgetDOM as getDOM} from '@angular/common';
 import {describe, expect, it} from '@angular/core/testing/src/testing_internal';
 import {RequestOptions} from '@angular/http/src/base_request_options';
 import {ContentType} from '@angular/http/src/enums';
 import {Headers} from '@angular/http/src/headers';
 import {stringToArrayBuffer, stringToArrayBuffer8} from '@angular/http/src/http_utils';
 import {ArrayBuffer, Request} from '@angular/http/src/static_request';
-import {ɵgetDOM as getDOM} from '@angular/platform-browser';
+import {supportsWebAnimation} from '@angular/platform-browser/testing/src/browser_util';
 
 {
   describe('Request', () => {
@@ -26,66 +27,67 @@ import {ɵgetDOM as getDOM} from '@angular/platform-browser';
 
       it('should return ContentType.JSON', () => {
         const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: null,
-          headers: new Headers({'content-type': 'application/json'})
-        }) as any);
+                                  url: 'test',
+                                  method: 'GET',
+                                  body: null,
+                                  headers: new Headers({'content-type': 'application/json'})
+                                }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.JSON);
       });
 
       it('should return ContentType.FORM', () => {
-        const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: null,
-          headers: new Headers({'content-type': 'application/x-www-form-urlencoded'})
-        }) as any);
+        const req = new Request(
+            new RequestOptions({
+              url: 'test',
+              method: 'GET',
+              body: null,
+              headers: new Headers({'content-type': 'application/x-www-form-urlencoded'})
+            }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.FORM);
       });
 
       it('should return ContentType.FORM_DATA', () => {
         const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: null,
-          headers: new Headers({'content-type': 'multipart/form-data'})
-        }) as any);
+                                  url: 'test',
+                                  method: 'GET',
+                                  body: null,
+                                  headers: new Headers({'content-type': 'multipart/form-data'})
+                                }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.FORM_DATA);
       });
 
       it('should return ContentType.TEXT', () => {
         const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: null,
-          headers: new Headers({'content-type': 'text/plain'})
-        }) as any);
+                                  url: 'test',
+                                  method: 'GET',
+                                  body: null,
+                                  headers: new Headers({'content-type': 'text/plain'})
+                                }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.TEXT);
       });
 
       it('should return ContentType.BLOB', () => {
         const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: null,
-          headers: new Headers({'content-type': 'application/octet-stream'})
-        }) as any);
+                                  url: 'test',
+                                  method: 'GET',
+                                  body: null,
+                                  headers: new Headers({'content-type': 'application/octet-stream'})
+                                }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.BLOB);
       });
 
       it('should not create a blob out of ArrayBuffer', () => {
         const req = new Request(new RequestOptions({
-          url: 'test',
-          method: 'GET',
-          body: new ArrayBuffer(1),
-          headers: new Headers({'content-type': 'application/octet-stream'})
-        }) as any);
+                                  url: 'test',
+                                  method: 'GET',
+                                  body: new ArrayBuffer(1),
+                                  headers: new Headers({'content-type': 'application/octet-stream'})
+                                }) as any);
 
         expect(req.detectContentType()).toEqual(ContentType.ARRAY_BUFFER);
       });
@@ -93,11 +95,11 @@ import {ɵgetDOM as getDOM} from '@angular/platform-browser';
 
     it('should return empty string if no body is present', () => {
       const req = new Request(new RequestOptions({
-        url: 'test',
-        method: 'GET',
-        body: null,
-        headers: new Headers({'content-type': 'application/json'})
-      }) as any);
+                                url: 'test',
+                                method: 'GET',
+                                body: null,
+                                headers: new Headers({'content-type': 'application/json'})
+                              }) as any);
 
       expect(req.text()).toEqual('');
     });
@@ -121,7 +123,7 @@ import {ɵgetDOM as getDOM} from '@angular/platform-browser';
       expect(req.url).toBe('http://test.com?a=1&b=2');
     });
 
-    if (getDOM().supportsWebAnimation()) {
+    if (supportsWebAnimation()) {
       it('should serialize an ArrayBuffer to string via legacy encoding', () => {
         const str = '\u89d2\u5ea6';
         expect(new Request({body: stringToArrayBuffer(str), url: '/'}).text()).toEqual(str);

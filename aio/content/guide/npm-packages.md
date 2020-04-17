@@ -80,8 +80,8 @@ The following support packages are included as dependencies in the default `pack
 
 Package name                               | Description
 ----------------------------------------   | --------------------------------------------------
-[**rxjs**](https://github.com/ReactiveX/rxjs) | Many Angular APIs return [_observables_](guide/glossary#observable). RxJS is an implementation of the proposed [Observables specification](https://github.com/tc39/proposal-observable) currently before the [TC39](https://www.ecma-international.org/memento/tc39-m.htm) committee, which determines standards for the JavaScript language.
-[**zone.js**](https://github.com/angular/zone.js) | Angular relies on zone.js to run Angular's change detection processes when native JavaScript operations raise events. Zone.js is an implementation of a [specification](https://gist.github.com/mhevery/63fdcdf7c65886051d55) currently before the [TC39](http://www.ecma-international.org/memento/TC39.htm) committee that determines standards for the JavaScript language.
+[**rxjs**](https://github.com/ReactiveX/rxjs) | Many Angular APIs return [_observables_](guide/glossary#observable). RxJS is an implementation of the proposed [Observables specification](https://github.com/tc39/proposal-observable) currently before the [TC39](https://www.ecma-international.org/memento/tc39.htm) committee, which determines standards for the JavaScript language.
+[**zone.js**](https://github.com/angular/zone.js) | Angular relies on zone.js to run Angular's change detection processes when native JavaScript operations raise events. Zone.js is an implementation of a [specification](https://gist.github.com/mhevery/63fdcdf7c65886051d55) currently before the [TC39](https://www.ecma-international.org/memento/tc39.htm) committee that determines standards for the JavaScript language.
 
 
 {@a polyfills}
@@ -93,9 +93,6 @@ features that Angular requires.
 The [Browser Support](guide/browser-support) guide explains which browsers need polyfills and
 how you can add them.
 
-The `package.json` for a new Angular workspace installs the [core-js](https://github.com/zloirock/core-js) package,
-which polyfills missing features for several popular browser.
-
 
 {@a dev-dependencies}
 
@@ -106,7 +103,7 @@ The packages listed in the `devDependencies` section of `package.json` help you 
 To add a new `devDependency`, use either one of the following commands:
 
 <code-example language="sh" class="code-shell">
-  npm install --dev &lt;package-name&gt;
+  npm install --save-dev &lt;package-name&gt;
 </code-example>
 
 <code-example language="sh" class="code-shell">

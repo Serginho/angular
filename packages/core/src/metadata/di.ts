@@ -45,6 +45,7 @@ import {makePropDecorator} from '../util/decorators';
  * ```
  *
  * @publicApi
+ * @deprecated Since 9.0.0. With Ivy, this property is no longer necessary.
  */
 export const ANALYZE_FOR_ENTRY_COMPONENTS = new InjectionToken<any>('AnalyzeForEntryComponents');
 
@@ -74,7 +75,7 @@ export interface AttributeDecorator {
    * @publicApi
    */
   (name: string): any;
-  new (name: string): Attribute;
+  new(name: string): Attribute;
 }
 
 
@@ -101,7 +102,7 @@ export interface Query {
   read: any;
   isViewQuery: boolean;
   selector: any;
-  static: boolean;
+  static?: boolean;
 }
 
 /**
@@ -157,7 +158,7 @@ export interface ContentChildrenDecorator {
    * @Annotation
    */
   (selector: Type<any>|Function|string, opts?: {descendants?: boolean, read?: any}): any;
-  new (selector: Type<any>|Function|string, opts?: {descendants?: boolean, read?: any}): Query;
+  new(selector: Type<any>|Function|string, opts?: {descendants?: boolean, read?: any}): Query;
 }
 
 /**
@@ -205,12 +206,7 @@ export interface ContentChildDecorator {
    * * **selector** - The directive type or the name used for querying.
    * * **read** - True to read a different token from the queried element.
    * * **static** - True to resolve query results before change detection runs,
-   * false to resolve after change detection.
-   *
-   * When `static` is not provided, uses the query results to determine the timing of query
-   * resolution. If any query results are inside a nested view (such as `*ngIf`), the query is
-   * resolved after change detection runs. Otherwise, it is resolved before change detection
-   * runs.
+   * false to resolve after change detection. Defaults to false.
    *
    * @usageNotes
    *
@@ -222,8 +218,8 @@ export interface ContentChildDecorator {
    *
    * @Annotation
    */
-  (selector: Type<any>|Function|string, opts: {read?: any, static: boolean}): any;
-  new (selector: Type<any>|Function|string, opts: {read?: any, static: boolean}): ContentChild;
+  (selector: Type<any>|Function|string, opts?: {read?: any, static?: boolean}): any;
+  new(selector: Type<any>|Function|string, opts?: {read?: any, static?: boolean}): ContentChild;
 }
 
 /**
@@ -242,8 +238,9 @@ export type ContentChild = Query;
  * @publicApi
  */
 export const ContentChild: ContentChildDecorator = makePropDecorator(
-    'ContentChild', (selector?: any, data: any = {}) =>
-                        ({selector, first: true, isViewQuery: false, descendants: true, ...data}),
+    'ContentChild',
+    (selector?: any, data: any = {}) =>
+        ({selector, first: true, isViewQuery: false, descendants: true, ...data}),
     Query);
 
 /**
@@ -279,7 +276,7 @@ export interface ViewChildrenDecorator {
    * @Annotation
    */
   (selector: Type<any>|Function|string, opts?: {read?: any}): any;
-  new (selector: Type<any>|Function|string, opts?: {read?: any}): ViewChildren;
+  new(selector: Type<any>|Function|string, opts?: {read?: any}): ViewChildren;
 }
 
 /**
@@ -296,8 +293,9 @@ export type ViewChildren = Query;
  * @publicApi
  */
 export const ViewChildren: ViewChildrenDecorator = makePropDecorator(
-    'ViewChildren', (selector?: any, data: any = {}) =>
-                        ({selector, first: false, isViewQuery: true, descendants: true, ...data}),
+    'ViewChildren',
+    (selector?: any, data: any = {}) =>
+        ({selector, first: false, isViewQuery: true, descendants: true, ...data}),
     Query);
 
 /**
@@ -320,12 +318,9 @@ export interface ViewChildDecorator {
    *
    * * **selector** - The directive type or the name used for querying.
    * * **read** - True to read a different token from the queried elements.
-   * * **static** - True to resolve query results before change detection runs
+   * * **static** - True to resolve query results before change detection runs,
+   * false to resolve after change detection. Defaults to false.
    *
-   * When `static` is not provided, uses query results to determine the timing of query
-   * resolution. If any query results are inside a nested view (such as `*ngIf`), the query is
-   * resolved after change detection runs. Otherwise, it is resolved before change detection
-   * runs.
    *
    * The following selectors are supported.
    *   * Any class with the `@Component` or `@Directive` decorator
@@ -348,8 +343,8 @@ export interface ViewChildDecorator {
    *
    * @Annotation
    */
-  (selector: Type<any>|Function|string, opts: {read?: any, static: boolean}): any;
-  new (selector: Type<any>|Function|string, opts: {read?: any, static: boolean}): ViewChild;
+  (selector: Type<any>|Function|string, opts?: {read?: any, static?: boolean}): any;
+  new(selector: Type<any>|Function|string, opts?: {read?: any, static?: boolean}): ViewChild;
 }
 
 /**
@@ -366,6 +361,7 @@ export type ViewChild = Query;
  * @publicApi
  */
 export const ViewChild: ViewChildDecorator = makePropDecorator(
-    'ViewChild', (selector: any, data: any) =>
-                     ({selector, first: true, isViewQuery: true, descendants: true, ...data}),
+    'ViewChild',
+    (selector: any, data: any) =>
+        ({selector, first: true, isViewQuery: true, descendants: true, ...data}),
     Query);

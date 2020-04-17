@@ -15,22 +15,25 @@ import {ERR_SW_NOT_SUPPORTED, NgswCommChannel, PushEvent} from './low_level';
 
 /**
  * Subscribe and listen to
- * [Web Push Notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API/Best_Practices)
- * through Angular Service Worker.
+ * [Web Push
+ * Notifications](https://developer.mozilla.org/en-US/docs/Web/API/Push_API/Best_Practices) through
+ * Angular Service Worker.
  *
  * @usageNotes
  *
  * You can inject a `SwPush` instance into any component or service
  * as a dependency.
  *
- * <code-example path="service-worker/push/module.ts" region="inject-sw-push" header="app.component.ts"></code-example>
+ * <code-example path="service-worker/push/module.ts" region="inject-sw-push"
+ * header="app.component.ts"></code-example>
  *
  * To subscribe, call `SwPush.requestSubscription()`, which asks the user for permission.
  * The call returns a `Promise` with a new
  * [`PushSubscription`](https://developer.mozilla.org/en-US/docs/Web/API/PushSubscription)
  * instance.
  *
- * <code-example path="service-worker/push/module.ts" region="subscribe-to-push" header="app.component.ts"></code-example>
+ * <code-example path="service-worker/push/module.ts" region="subscribe-to-push"
+ * header="app.component.ts"></code-example>
  *
  * A request is rejected if the user denies permission, or if the browser
  * blocks or does not support the Push API or ServiceWorkers.
@@ -61,7 +64,8 @@ import {ERR_SW_NOT_SUPPORTED, NgswCommChannel, PushEvent} from './low_level';
  * ```
  *
  * Only `title` is required. See `Notification`
- * [instance properties](https://developer.mozilla.org/en-US/docs/Web/API/Notification#Instance_properties).
+ * [instance
+ * properties](https://developer.mozilla.org/en-US/docs/Web/API/Notification#Instance_properties).
  *
  * While the subscription is active, Service Worker listens for
  * [PushEvent](https://developer.mozilla.org/en-US/docs/Web/API/PushEvent)
@@ -74,7 +78,8 @@ import {ERR_SW_NOT_SUPPORTED, NgswCommChannel, PushEvent} from './low_level';
  * An application can subscribe to `SwPush.notificationClicks` observable to be notified when a user
  * clicks on a notification. For example:
  *
- * <code-example path="service-worker/push/module.ts" region="subscribe-to-notification-clicks" header="app.component.ts"></code-example>
+ * <code-example path="service-worker/push/module.ts" region="subscribe-to-notification-clicks"
+ * header="app.component.ts"></code-example>
  *
  * @see [Push Notifications](https://developers.google.com/web/fundamentals/codelabs/push-notifications/)
  * @see [Angular Push Notifications](https://blog.angular-university.io/angular-push-notifications/)
@@ -93,10 +98,10 @@ export class SwPush {
 
   /**
    * Emits the payloads of the received push notification messages as well as the action the user
-   * interacted with. If no action was used the `action` property contains an empty string `''`.
+   * interacted with. If no action was used the action property will be an empty string `''`.
    *
-   * Note that the `notification` property does **not** contain a
-   * [Notification][Mozilla Notification] object but rather a
+   * Note that the `notification` property is **not** a [Notification][Mozilla Notification] object
+   * but rather a
    * [NotificationOptions](https://notifications.spec.whatwg.org/#dictdef-notificationoptions)
    * object that also includes the `title` of the [Notification][Mozilla Notification] object.
    *
@@ -142,27 +147,8 @@ export class SwPush {
 
     const workerDrivenSubscriptions = this.pushManager.pipe(switchMap(pm => pm.getSubscription()));
     this.subscription = merge(workerDrivenSubscriptions, this.subscriptionChanges);
-
-    this.subscription.subscribe(subscription => {
-      let pushData = {
-        action: 'STATUS_PUSH',
-        statusNonce: this.sw.generateNonce(),
-        subscription: null
-      };
-      if (typeof(PushSubscription) === 'function' && subscription instanceof PushSubscription) {
-        pushData.subscription = JSON.parse(JSON.stringify(subscription));
-      }
-      this.sw.postMessageWithStatus('STATUS_PUSH', pushData, pushData.statusNonce);
-    });
   }
 
-  /**
-   * Subscribes to Web Push Notifications,
-   * after requesting and receiving user permission.
-   *
-   * @param options An object containing the `serverPublicKey` string.
-   * @returns A Promise that resolves to the new subscription object.
-   */
   requestSubscription(options: {serverPublicKey: string}): Promise<PushSubscription> {
     if (!this.sw.isEnabled) {
       return Promise.reject(new Error(ERR_SW_NOT_SUPPORTED));
@@ -183,12 +169,6 @@ export class SwPush {
         });
   }
 
-  /**
-   * Unsubscribes from Service Worker push notifications.
-   *
-   * @returns A Promise that is resolved when the operation succeeds, or is rejected if there is no
-   *          active subscription or the unsubscribe operation fails.
-   */
   unsubscribe(): Promise<void> {
     if (!this.sw.isEnabled) {
       return Promise.reject(new Error(ERR_SW_NOT_SUPPORTED));

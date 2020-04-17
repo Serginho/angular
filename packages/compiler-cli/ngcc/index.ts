@@ -8,22 +8,16 @@
 import {CachedFileSystem, NodeJSFileSystem, setFileSystem} from '../src/ngtsc/file_system';
 
 import {mainNgcc} from './src/main';
-import {hasBeenProcessed as _hasBeenProcessed} from './src/packages/build_marker';
-import {EntryPointJsonProperty, EntryPointPackageJson} from './src/packages/entry_point';
+import {AsyncNgccOptions, NgccOptions, SyncNgccOptions} from './src/ngcc_options';
 
-export {ConsoleLogger, LogLevel} from './src/logging/console_logger';
-export {Logger} from './src/logging/logger';
-export {NgccOptions} from './src/main';
-export {PathMappings} from './src/utils';
+export {ConsoleLogger} from './src/logging/console_logger';
+export {Logger, LogLevel} from './src/logging/logger';
+export {AsyncNgccOptions, NgccOptions, PathMappings, SyncNgccOptions} from './src/ngcc_options';
 
-export function hasBeenProcessed(packageJson: object, format: string) {
+export function process(options: AsyncNgccOptions): Promise<void>;
+export function process(options: SyncNgccOptions): void;
+export function process(options: NgccOptions): void|Promise<void> {
   // Recreate the file system on each call to reset the cache
   setFileSystem(new CachedFileSystem(new NodeJSFileSystem()));
-  return _hasBeenProcessed(packageJson as EntryPointPackageJson, format as EntryPointJsonProperty);
-}
-
-export function process(...args: Parameters<typeof mainNgcc>) {
-  // Recreate the file system on each call to reset the cache
-  setFileSystem(new CachedFileSystem(new NodeJSFileSystem()));
-  return mainNgcc(...args);
+  return mainNgcc(options);
 }

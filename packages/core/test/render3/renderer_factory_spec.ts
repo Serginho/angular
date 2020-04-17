@@ -12,13 +12,13 @@ import {ɵɵcontainer, ɵɵcontainerRefreshEnd, ɵɵcontainerRefreshStart, ɵɵe
 import {RenderFlags} from '../../src/render3/interfaces/definition';
 
 import {getRendererFactory2} from './imported_renderer2';
-import {TemplateFixture, document, renderToHtml} from './render_util';
+import {document, renderToHtml, TemplateFixture} from './render_util';
 
 describe('renderer factory lifecycle', () => {
   let logs: string[] = [];
   let rendererFactory = getRendererFactory2(document);
   const createRender = rendererFactory.createRenderer;
-  rendererFactory.createRenderer = (hostElement: any, type: RendererType2 | null) => {
+  rendererFactory.createRenderer = (hostElement: any, type: RendererType2|null) => {
     logs.push('create');
     return createRender.apply(rendererFactory, [hostElement, type]);
   };
@@ -26,36 +26,38 @@ describe('renderer factory lifecycle', () => {
   rendererFactory.end = () => logs.push('end');
 
   class SomeComponent {
-    static ngComponentDef = ɵɵdefineComponent({
+    static ɵfac = () => new SomeComponent;
+    static ɵcmp = ɵɵdefineComponent({
       type: SomeComponent,
       encapsulation: ViewEncapsulation.None,
       selectors: [['some-component']],
-      consts: 1,
+      decls: 1,
       vars: 0,
-      template: function(rf: RenderFlags, ctx: SomeComponent) {
-        if (rf & RenderFlags.Create) {
-          logs.push('component create');
-          ɵɵtext(0, 'foo');
-        }
-        if (rf & RenderFlags.Update) {
-          logs.push('component update');
-        }
-      },
-      factory: () => new SomeComponent
+      template:
+          function(rf: RenderFlags, ctx: SomeComponent) {
+            if (rf & RenderFlags.Create) {
+              logs.push('component create');
+              ɵɵtext(0, 'foo');
+            }
+            if (rf & RenderFlags.Update) {
+              logs.push('component update');
+            }
+          }
     });
   }
 
   class SomeComponentWhichThrows {
-    static ngComponentDef = ɵɵdefineComponent({
+    static ɵfac = () => new SomeComponentWhichThrows;
+    static ɵcmp = ɵɵdefineComponent({
       type: SomeComponentWhichThrows,
       encapsulation: ViewEncapsulation.None,
       selectors: [['some-component-with-Error']],
-      consts: 0,
+      decls: 0,
       vars: 0,
-      template: function(rf: RenderFlags, ctx: SomeComponentWhichThrows) {
-        throw(new Error('SomeComponentWhichThrows threw'));
-      },
-      factory: () => new SomeComponentWhichThrows
+      template:
+          function(rf: RenderFlags, ctx: SomeComponentWhichThrows) {
+            throw (new Error('SomeComponentWhichThrows threw'));
+          }
     });
   }
 
@@ -82,7 +84,9 @@ describe('renderer factory lifecycle', () => {
     }
   }
 
-  beforeEach(() => { logs = []; });
+  beforeEach(() => {
+    logs = [];
+  });
 
   it('should work with a template', () => {
     renderToHtml(Template, {}, 1, 0, null, null, rendererFactory);
@@ -104,7 +108,6 @@ describe('renderer factory lifecycle', () => {
     renderToHtml(TemplateWithComponent, {}, 2, 0, directives);
     expect(logs).toEqual(['begin', 'function_with_component update', 'component update', 'end']);
   });
-
 });
 
 describe('Renderer2 destruction hooks', () => {
@@ -150,18 +153,19 @@ describe('Renderer2 destruction hooks', () => {
 
   it('should call renderer.destroy for each component destroyed', () => {
     class SimpleComponent {
-      static ngComponentDef = ɵɵdefineComponent({
+      static ɵfac = () => new SimpleComponent;
+      static ɵcmp = ɵɵdefineComponent({
         type: SimpleComponent,
         encapsulation: ViewEncapsulation.None,
         selectors: [['simple']],
-        consts: 1,
+        decls: 1,
         vars: 0,
-        template: function(rf: RenderFlags, ctx: SimpleComponent) {
-          if (rf & RenderFlags.Create) {
-            ɵɵelement(0, 'span');
-          }
-        },
-        factory: () => new SimpleComponent,
+        template:
+            function(rf: RenderFlags, ctx: SimpleComponent) {
+              if (rf & RenderFlags.Create) {
+                ɵɵelement(0, 'span');
+              }
+            },
       });
     }
 

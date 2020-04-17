@@ -10,7 +10,7 @@ import * as ts from 'typescript';
 
 import {AbsoluteFsPath} from '../../file_system';
 
-import {ShimGenerator} from './host';
+import {ShimGenerator} from './api';
 
 /**
  * A `ShimGenerator` which adds a type-checking file to the `ts.Program`.
@@ -22,7 +22,9 @@ import {ShimGenerator} from './host';
 export class TypeCheckShimGenerator implements ShimGenerator {
   constructor(private typeCheckFile: AbsoluteFsPath) {}
 
-  recognize(fileName: AbsoluteFsPath): boolean { return fileName === this.typeCheckFile; }
+  recognize(fileName: AbsoluteFsPath): boolean {
+    return fileName === this.typeCheckFile;
+  }
 
   generate(genFileName: AbsoluteFsPath, readFile: (fileName: string) => ts.SourceFile | null):
       ts.SourceFile|null {

@@ -11,7 +11,7 @@ import {Provider} from '../di';
 import {Type} from '../interface/type';
 import {compileComponent as render3CompileComponent, compileDirective as render3CompileDirective} from '../render3/jit/directive';
 import {compilePipe as render3CompilePipe} from '../render3/jit/pipe';
-import {TypeDecorator, makeDecorator, makePropDecorator} from '../util/decorators';
+import {makeDecorator, makePropDecorator, TypeDecorator} from '../util/decorators';
 import {noop} from '../util/noop';
 
 import {ViewEncapsulation} from './view';
@@ -68,12 +68,12 @@ export interface DirectiveDecorator {
    *
    * @Annotation
    */
-  (obj: Directive): TypeDecorator;
+  (obj?: Directive): TypeDecorator;
 
   /**
    * See the `Directive` decorator.
    */
-  new (obj: Directive): Directive;
+  new(obj?: Directive): Directive;
 }
 
 /**
@@ -140,7 +140,7 @@ export interface Directive {
    * class BankAccount {
    *   bankName: string;
    *   id: string;
-   *
+   * }
    * ```
    *
    */
@@ -445,7 +445,7 @@ export interface ComponentDecorator {
   /**
    * See the `Component` decorator.
    */
-  new (obj: Component): Component;
+  new(obj: Component): Component;
 }
 
 /**
@@ -542,6 +542,7 @@ export interface Component extends Directive {
    * this component. For each component listed here,
    * Angular creates a {@link ComponentFactory} and stores it in the
    * {@link ComponentFactoryResolver}.
+   * @deprecated Since 9.0.0. With Ivy, this property is no longer necessary.
    */
   entryComponents?: Array<Type<any>|any[]>;
 
@@ -597,7 +598,7 @@ export interface PipeDecorator {
   /**
    * See the `Pipe` decorator.
    */
-  new (obj: Pipe): Pipe;
+  new(obj: Pipe): Pipe;
 }
 
 /**
@@ -640,52 +641,52 @@ export const Pipe: PipeDecorator = makeDecorator(
  */
 export interface InputDecorator {
   /**
-  * Decorator that marks a class field as an input property and supplies configuration metadata.
-  * The input property is bound to a DOM property in the template. During change detection,
-  * Angular automatically updates the data property with the DOM property's value.
-  *
-  * @usageNotes
-  *
-  * You can supply an optional name to use in templates when the
-  * component is instantiated, that maps to the
-  * name of the bound property. By default, the original
-  * name of the bound property is used for input binding.
-  *
-  * The following example creates a component with two input properties,
-  * one of which is given a special binding name.
-  *
-  * ```typescript
-  * @Component({
-  *   selector: 'bank-account',
-  *   template: `
-  *     Bank Name: {{bankName}}
-  *     Account Id: {{id}}
-  *   `
-  * })
-  * class BankAccount {
-  *   // This property is bound using its original name.
-  *   @Input() bankName: string;
-  *   // this property value is bound to a different property name
-  *   // when this component is instantiated in a template.
-  *   @Input('account-id') id: string;
-  *
-  *   // this property is not bound, and is not automatically updated by Angular
-  *   normalizedBankName: string;
-  * }
-  *
-  * @Component({
-  *   selector: 'app',
-  *   template: `
-  *     <bank-account bankName="RBC" account-id="4747"></bank-account>
-  *   `
-  * })
-  * class App {}
-  * ```
-  *
-  * @see [Input and Output properties](guide/template-syntax#input-and-output-properties)
-  */
+   * Decorator that marks a class field as an input property and supplies configuration metadata.
+   * The input property is bound to a DOM property in the template. During change detection,
+   * Angular automatically updates the data property with the DOM property's value.
+   *
+   * @usageNotes
+   *
+   * You can supply an optional name to use in templates when the
+   * component is instantiated, that maps to the
+   * name of the bound property. By default, the original
+   * name of the bound property is used for input binding.
+   *
+   * The following example creates a component with two input properties,
+   * one of which is given a special binding name.
+   *
+   * ```typescript
+   * @Component({
+   *   selector: 'bank-account',
+   *   template: `
+   *     Bank Name: {{bankName}}
+   *     Account Id: {{id}}
+   *   `
+   * })
+   * class BankAccount {
+   *   // This property is bound using its original name.
+   *   @Input() bankName: string;
+   *   // this property value is bound to a different property name
+   *   // when this component is instantiated in a template.
+   *   @Input('account-id') id: string;
+   *
+   *   // this property is not bound, and is not automatically updated by Angular
+   *   normalizedBankName: string;
+   * }
+   *
+   * @Component({
+   *   selector: 'app',
+   *   template: `
+   *     <bank-account bankName="RBC" account-id="4747"></bank-account>
+   *   `
+   * })
+   * class App {}
+   * ```
+   *
+   * @see [Input and Output properties](guide/template-syntax#input-and-output-properties)
+   */
   (bindingPropertyName?: string): any;
-  new (bindingPropertyName?: string): any;
+  new(bindingPropertyName?: string): any;
 }
 
 /**
@@ -714,23 +715,23 @@ export const Input: InputDecorator =
  */
 export interface OutputDecorator {
   /**
-  * Decorator that marks a class field as an output property and supplies configuration metadata.
-  * The DOM property bound to the output property is automatically updated during change detection.
-  *
-  * @usageNotes
-  *
-  * You can supply an optional name to use in templates when the
-  * component is instantiated, that maps to the
-  * name of the bound property. By default, the original
-  * name of the bound property is used for output binding.
-  *
-  * See `Input` decorator for an example of providing a binding name.
-  *
-  * @see [Input and Output properties](guide/template-syntax#input-and-output-properties)
-  *
-  */
+   * Decorator that marks a class field as an output property and supplies configuration metadata.
+   * The DOM property bound to the output property is automatically updated during change detection.
+   *
+   * @usageNotes
+   *
+   * You can supply an optional name to use in templates when the
+   * component is instantiated, that maps to the
+   * name of the bound property. By default, the original
+   * name of the bound property is used for output binding.
+   *
+   * See `Input` decorator for an example of providing a binding name.
+   *
+   * @see [Input and Output properties](guide/template-syntax#input-and-output-properties)
+   *
+   */
   (bindingPropertyName?: string): any;
-  new (bindingPropertyName?: string): any;
+  new(bindingPropertyName?: string): any;
 }
 
 /**
@@ -740,8 +741,8 @@ export interface OutputDecorator {
  */
 export interface Output {
   /**
-  * The name of the DOM property to which the output property is bound.
-  */
+   * The name of the DOM property to which the output property is bound.
+   */
   bindingPropertyName?: string;
 }
 
@@ -790,7 +791,7 @@ export interface HostBindingDecorator {
    *
    */
   (hostPropertyName?: string): any;
-  new (hostPropertyName?: string): any;
+  new(hostPropertyName?: string): any;
 }
 
 /**
@@ -824,7 +825,7 @@ export interface HostListenerDecorator {
    * and provides a handler method to run when that event occurs.
    */
   (eventName: string, args?: string[]): any;
-  new (eventName: string, args?: string[]): any;
+  new(eventName: string, args?: string[]): any;
 }
 
 /**
@@ -871,6 +872,29 @@ export interface HostListener {
  *   template: '<button counting>Increment</button>',
  * })
  * class App {}
+ *
+ * ```
+ *
+ * The following example registers another DOM event handler that listens for key-press events.
+ * ``` ts
+ * import { HostListener, Component } from "@angular/core";
+ *
+ * @Component({
+ *   selector: 'app',
+ *   template: `<h1>Hello, you have pressed keys {{counter}} number of times!</h1> Press any key to
+ * increment the counter.
+ *   <button (click)="resetCounter()">Reset Counter</button>`
+ * })
+ * class AppComponent {
+ *   counter = 0;
+ *   @HostListener('window:keydown', ['$event'])
+ *   handleKeyDown(event: KeyboardEvent) {
+ *     this.counter++;
+ *   }
+ *   resetCounter() {
+ *     this.counter = 0;
+ *   }
+ * }
  * ```
  *
  * @Annotation

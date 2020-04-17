@@ -19,11 +19,17 @@ export class TypeCheckProgramHost implements ts.CompilerHost {
    */
   private sfMap: Map<string, ts.SourceFile>;
 
+  readonly resolveModuleNames?: ts.CompilerHost['resolveModuleNames'];
+
   constructor(sfMap: Map<string, ts.SourceFile>, private delegate: ts.CompilerHost) {
     this.sfMap = sfMap;
 
     if (delegate.getDirectories !== undefined) {
-      this.getDirectories = (path: string) => delegate.getDirectories !(path);
+      this.getDirectories = (path: string) => delegate.getDirectories!(path);
+    }
+
+    if (delegate.resolveModuleNames !== undefined) {
+      this.resolveModuleNames = delegate.resolveModuleNames;
     }
   }
 
@@ -63,7 +69,9 @@ export class TypeCheckProgramHost implements ts.CompilerHost {
     throw new Error(`TypeCheckProgramHost should never write files`);
   }
 
-  getCurrentDirectory(): string { return this.delegate.getCurrentDirectory(); }
+  getCurrentDirectory(): string {
+    return this.delegate.getCurrentDirectory();
+  }
 
   getDirectories?: (path: string) => string[];
 
@@ -71,13 +79,19 @@ export class TypeCheckProgramHost implements ts.CompilerHost {
     return this.delegate.getCanonicalFileName(fileName);
   }
 
-  useCaseSensitiveFileNames(): boolean { return this.delegate.useCaseSensitiveFileNames(); }
+  useCaseSensitiveFileNames(): boolean {
+    return this.delegate.useCaseSensitiveFileNames();
+  }
 
-  getNewLine(): string { return this.delegate.getNewLine(); }
+  getNewLine(): string {
+    return this.delegate.getNewLine();
+  }
 
   fileExists(fileName: string): boolean {
     return this.sfMap.has(fileName) || this.delegate.fileExists(fileName);
   }
 
-  readFile(fileName: string): string|undefined { return this.delegate.readFile(fileName); }
+  readFile(fileName: string): string|undefined {
+    return this.delegate.readFile(fileName);
+  }
 }

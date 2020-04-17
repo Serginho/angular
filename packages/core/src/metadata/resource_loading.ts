@@ -87,7 +87,7 @@ export function resolveComponentResources(
 
 let componentResourceResolutionQueue = new Map<Type<any>, Component>();
 
-// Track when existing ngComponentDef for a Type is waiting on resources.
+// Track when existing ɵcmp for a Type is waiting on resources.
 const componentDefPendingResolution = new Set<Type<any>>();
 
 export function maybeQueueResolutionOfComponentResources(type: Type<any>, metadata: Component) {
@@ -122,7 +122,7 @@ export function isComponentResourceResolutionQueueEmpty() {
   return componentResourceResolutionQueue.size === 0;
 }
 
-function unwrapResponse(response: string | {text(): Promise<string>}): string|Promise<string> {
+function unwrapResponse(response: string|{text(): Promise<string>}): string|Promise<string> {
   return typeof response == 'string' ? response : response.text();
 }
 

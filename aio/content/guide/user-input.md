@@ -1,4 +1,4 @@
-# User Input
+# User input
 
 User actions such as clicking a link, pushing a button, and entering
 text raise DOM events.
@@ -82,11 +82,9 @@ Here's what the UI displays:
 
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/user-input/keyup1-anim.gif' alt="key up 1">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/user-input/keyup1-anim.gif' alt="key up 1">
+</div>
 
 
 
@@ -163,11 +161,9 @@ and the component does nothing.
 Type something in the input box, and watch the display update with each keystroke.
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/user-input/keyup-loop-back-anim.gif' alt="loop back">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/user-input/keyup-loop-back-anim.gif' alt="loop back">
+</div>
 
 
 
@@ -215,11 +211,9 @@ Then Angular calls the event handler only when the user presses _Enter_.
 
 Here's how it works.
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/user-input/keyup3-anim.gif' alt="key up 3">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/user-input/keyup3-anim.gif' alt="key up 3">
+</div>
 
 
 
@@ -249,11 +243,9 @@ The user can add a hero by typing the hero's name in the input box and
 clicking **Add**.
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/user-input/little-tour-anim.gif' alt="Little Tour of Heroes">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/user-input/little-tour-anim.gif' alt="Little Tour of Heroes">
+</div>
 
 
 
@@ -306,7 +298,23 @@ Following is all the code discussed in this page.
 </code-tabs>
 
 
+Angular also supports passive event listeners. For example, you can use the following steps to make the scroll event passive.
 
+1. Create a file `zone-flags.ts` under `src` directory.
+2. Add the following line into this file.
+
+```
+(window as any)['__zone_symbol__PASSIVE_EVENTS'] = ['scroll'];
+```
+
+3. In the `src/polyfills.ts` file, before importing zone.js, import the newly created `zone-flags`.
+
+```
+import './zone-flags';
+import 'zone.js/dist/zone';  // Included with Angular CLI.
+```
+
+After those steps, if you add event listeners for the `scroll` event, the listeners will be `passive`.
 
 ## Summary
 

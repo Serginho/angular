@@ -145,11 +145,9 @@ the same way you've done it before.
 
 Here's *Alex* and family in action.
 
-<figure class="lightbox">
-  <div class="card">
-    <img src="generated/images/guide/dependency-injection-in-action/alex.png" alt="Alex in action">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src="generated/images/guide/dependency-injection-in-action/alex.png" alt="Alex in action">
+</div>
 
 
 
@@ -159,7 +157,7 @@ Here's *Alex* and family in action.
 ### Find a parent in a tree with _@SkipSelf()_
 
 Imagine one branch of a component hierarchy: *Alice* -> *Barry* -> *Carol*.
-Both *Alice* and *Barry* implement the `Parent' class interface.
+Both *Alice* and *Barry* implement the `Parent` class interface.
 
 *Barry* is the problem. He needs to reach his parent, *Alice*, and also be a parent to *Carol*.
 That means he must both *inject* the `Parent` class interface to get *Alice* and
@@ -203,13 +201,9 @@ which *is* what parent means.
 Here's *Alice*, *Barry*, and family in action.
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src="generated/images/guide/dependency-injection-in-action/alice.png" alt="Alice in action">
-  </div>
-</figure>
-
-
+<div class="lightbox">
+  <img src="generated/images/guide/dependency-injection-in-action/alice.png" alt="Alice in action">
+</div>
 
 {@a parent-token}
 

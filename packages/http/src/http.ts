@@ -20,7 +20,7 @@ function httpRequest(backend: ConnectionBackend, request: Request): Observable<R
 }
 
 function mergeOptions(
-    defaultOpts: BaseRequestOptions, providedOpts: RequestOptionsArgs | undefined,
+    defaultOpts: BaseRequestOptions, providedOpts: RequestOptionsArgs|undefined,
     method: RequestMethod, url: string): RequestArgs {
   const newOptions = defaultOpts;
   if (providedOpts) {
@@ -118,7 +118,7 @@ export class Http {
     if (typeof url === 'string') {
       responseObservable = httpRequest(
           this._backend,
-          new Request(mergeOptions(this._defaultOptions, options, RequestMethod.Get, <string>url)));
+          new Request(mergeOptions(this._defaultOptions, options, RequestMethod.Get, url)));
     } else if (url instanceof Request) {
       responseObservable = httpRequest(this._backend, url);
     } else {
@@ -156,7 +156,7 @@ export class Http {
   /**
    * Performs a request with `delete` http method.
    */
-  delete (url: string, options?: RequestOptionsArgs): Observable<Response> {
+  delete(url: string, options?: RequestOptionsArgs): Observable<Response> {
     return this.request(
         new Request(mergeOptions(this._defaultOptions, options, RequestMethod.Delete, url)));
   }
@@ -215,8 +215,7 @@ export class Jsonp extends Http {
   request(url: string|Request, options?: RequestOptionsArgs): Observable<Response> {
     let responseObservable: any;
     if (typeof url === 'string') {
-      url =
-          new Request(mergeOptions(this._defaultOptions, options, RequestMethod.Get, <string>url));
+      url = new Request(mergeOptions(this._defaultOptions, options, RequestMethod.Get, url));
     }
     if (url instanceof Request) {
       if (url.method !== RequestMethod.Get) {

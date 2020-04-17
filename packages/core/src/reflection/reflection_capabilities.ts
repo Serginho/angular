@@ -6,7 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Type, isType} from '../interface/type';
+import {isType, Type} from '../interface/type';
+import {newArray} from '../util/array_utils';
 import {ANNOTATIONS, PARAMETERS, PROP_METADATA} from '../util/decorators';
 import {global} from '../util/global';
 import {stringify} from '../util/stringify';
@@ -42,20 +43,26 @@ export function isDelegateCtor(typeStr: string): boolean {
 export class ReflectionCapabilities implements PlatformReflectionCapabilities {
   private _reflect: any;
 
-  constructor(reflect?: any) { this._reflect = reflect || global['Reflect']; }
+  constructor(reflect?: any) {
+    this._reflect = reflect || global['Reflect'];
+  }
 
-  isReflectionEnabled(): boolean { return true; }
+  isReflectionEnabled(): boolean {
+    return true;
+  }
 
-  factory<T>(t: Type<T>): (args: any[]) => T { return (...args: any[]) => new t(...args); }
+  factory<T>(t: Type<T>): (args: any[]) => T {
+    return (...args: any[]) => new t(...args);
+  }
 
   /** @internal */
   _zipTypesAndAnnotations(paramTypes: any[], paramAnnotations: any[]): any[][] {
     let result: any[][];
 
     if (typeof paramTypes === 'undefined') {
-      result = new Array(paramAnnotations.length);
+      result = newArray(paramAnnotations.length);
     } else {
-      result = new Array(paramTypes.length);
+      result = newArray(paramTypes.length);
     }
 
     for (let i = 0; i < result.length; i++) {
@@ -120,7 +127,7 @@ export class ReflectionCapabilities implements PlatformReflectionCapabilities {
     // based on function.length.
     // Note: We know that this is a real constructor as we checked
     // the content of the constructor above.
-    return new Array((<any>type.length)).fill(undefined);
+    return newArray<any[]>(type.length);
   }
 
   parameters(type: Type<any>): any[][] {
@@ -235,9 +242,13 @@ export class ReflectionCapabilities implements PlatformReflectionCapabilities {
     return type instanceof Type && lcProperty in type.prototype;
   }
 
-  guards(type: any): {[key: string]: any} { return {}; }
+  guards(type: any): {[key: string]: any} {
+    return {};
+  }
 
-  getter(name: string): GetterFn { return <GetterFn>new Function('o', 'return o.' + name + ';'); }
+  getter(name: string): GetterFn {
+    return <GetterFn>new Function('o', 'return o.' + name + ';');
+  }
 
   setter(name: string): SetterFn {
     return <SetterFn>new Function('o', 'v', 'return o.' + name + ' = v;');
@@ -259,12 +270,16 @@ export class ReflectionCapabilities implements PlatformReflectionCapabilities {
     return `./${stringify(type)}`;
   }
 
-  resourceUri(type: any): string { return `./${stringify(type)}`; }
+  resourceUri(type: any): string {
+    return `./${stringify(type)}`;
+  }
 
   resolveIdentifier(name: string, moduleUrl: string, members: string[], runtime: any): any {
     return runtime;
   }
-  resolveEnum(enumIdentifier: any, name: string): any { return enumIdentifier[name]; }
+  resolveEnum(enumIdentifier: any, name: string): any {
+    return enumIdentifier[name];
+  }
 }
 
 function convertTsickleDecoratorIntoMetadata(decoratorInvocations: any[]): any[] {

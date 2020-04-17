@@ -1,9 +1,22 @@
-load("//tools:defaults.bzl", "jasmine_node_test", "ts_library", "ts_web_test_suite")
+load("//tools:defaults.bzl", "jasmine_node_test", "karma_web_test_suite", "ts_library")
+load("//tools/circular_dependency_test:index.bzl", "circular_dependency_test")
 
 exports_files([
     "browser/static_assets/200.html",
     "static_assets/test.html",
 ])
+
+circular_dependency_test(
+    name = "circular_deps_test",
+    entry_point = "angular/packages/platform-browser/index.js",
+    deps = ["//packages/platform-browser"],
+)
+
+circular_dependency_test(
+    name = "testing_circular_deps_test",
+    entry_point = "angular/packages/platform-browser/testing/index.js",
+    deps = ["//packages/platform-browser/testing"],
+)
 
 ts_library(
     name = "test_lib",
@@ -29,17 +42,27 @@ ts_library(
 
 jasmine_node_test(
     name = "test",
-    bootstrap = ["angular/tools/testing/init_node_spec.js"],
+    bootstrap = ["//tools/testing:node_es5"],
     deps = [
         ":test_lib",
-        "//tools/testing:node",
     ],
 )
 
-ts_web_test_suite(
+karma_web_test_suite(
     name = "test_web",
     static_files = [
         ":static_assets/test.html",
+    ],
+    tags = [
+        # disabled on 2020-04-14 due to failure on saucelabs monitor job
+        # https://app.circleci.com/pipelines/github/angular/angular/13320/workflows/9ca3527a-d448-4a64-880a-fb4de9d1fece/jobs/680645
+        # ```
+        # Chrome 73.0.3683 (Windows 7.0.0) public testing API using the test injector with modules components with template url should allow to createSync components with templateUrl after explicit async compilation FAILED
+        #   Error: Component 'CompWithUrlTemplate' is not resolved:
+        # IE 10.0.0 (Windows 8.0.0) ERROR: 'Unhandled Promise rejection:', 'Failed to load ./sometemplate.html', '; Zone:', 'ProxyZone', '; Task:', 'Promise.then', '; Value:', 'Failed to load ./sometemplate.html', undefined
+        # Chrome Mobile 74.0.3729 (Android 0.0.0) ERROR: 'Unhandled Promise rejection:', 'Failed to load ./sometemplate.html', '; Zone:', 'ProxyZone', '; Task:', 'Promise.then', '; Value:', 'Failed to load ./sometemplate.html', undefined
+        # ```
+        "fixme-saucelabs-ivy",
     ],
     deps = [
         ":test_lib",

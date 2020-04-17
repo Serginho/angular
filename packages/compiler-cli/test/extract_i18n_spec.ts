@@ -207,7 +207,9 @@ describe('extract_i18n command line', () => {
   beforeEach(() => {
     errorSpy = jasmine.createSpy('consoleError').and.callFake(console.error);
     const support = setup();
-    write = (fileName: string, content: string) => { support.write(fileName, content); };
+    write = (fileName: string, content: string) => {
+      support.write(fileName, content);
+    };
     basePath = support.basePath;
     outDir = path.join(basePath, 'built');
     write('tsconfig-base.json', `{
@@ -225,6 +227,9 @@ describe('extract_i18n command line', () => {
         "moduleResolution": "node",
         "lib": ["es6", "dom"],
         "typeRoots": ["node_modules/@types"]
+      },
+      "angularCompilerOptions": {
+        "enableIvy": false
       }
     }`);
   });

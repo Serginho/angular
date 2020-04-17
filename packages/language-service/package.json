@@ -4,12 +4,13 @@
   "description": "Angular - language services",
   "main": "./bundles/language-service.umd.js",
   "module": "./fesm5/language-service.js",
-  "typings": "./language-service.d.ts",
+  "typings": "./index.d.ts",
   "author": "angular",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/angular/angular.git"
+    "url": "https://github.com/angular/angular.git",
+    "directory": "packages/language-service"
   },
   "ng-update": {
     "packageGroup": "NG_UPDATE_PACKAGE_GROUP"

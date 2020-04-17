@@ -6,11 +6,11 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ɵRenderFlags, ɵrenderComponent as renderComponent, ɵɵcontainer, ɵɵcontainerRefreshEnd, ɵɵcontainerRefreshStart, ɵɵdefineComponent, ɵɵelementEnd, ɵɵelementStart, ɵɵembeddedViewEnd, ɵɵembeddedViewStart, ɵɵselect, ɵɵstyleProp, ɵɵstyling, ɵɵstylingApply, ɵɵtext, ɵɵtextInterpolate1} from '@angular/core';
+import {ɵrenderComponent as renderComponent, ɵRenderFlags, ɵɵadvance, ɵɵcontainer, ɵɵcontainerRefreshEnd, ɵɵcontainerRefreshStart, ɵɵdefineComponent, ɵɵelementEnd, ɵɵelementStart, ɵɵembeddedViewEnd, ɵɵembeddedViewStart, ɵɵstyleProp, ɵɵtext, ɵɵtextInterpolate1} from '@angular/core';
 
 import {bindAction, profile} from '../../util';
 import {createDom, destroyDom, detectChanges} from '../render3/tree';
-import {TreeNode, emptyTree} from '../util';
+import {emptyTree, TreeNode} from '../util';
 
 function noop() {}
 
@@ -18,26 +18,29 @@ export class TreeFunction {
   data: TreeNode = emptyTree;
 
   /** @nocollapse */
-  static ngComponentDef = ɵɵdefineComponent({
+  static ɵfac = () => new TreeFunction;
+
+  /** @nocollapse */
+  static ɵcmp = ɵɵdefineComponent({
     type: TreeFunction,
     selectors: [['tree']],
-    consts: 5,
-    vars: 1,
-    template: function(rf: ɵRenderFlags, ctx: TreeFunction) {
-      // bit of a hack
-      TreeTpl(rf, ctx.data);
-    },
-    factory: () => new TreeFunction,
+    decls: 5,
+    vars: 2,
+    template:
+        function(rf: ɵRenderFlags, ctx: TreeFunction) {
+          // bit of a hack
+          TreeTpl(rf, ctx.data);
+        },
     inputs: {data: 'data'}
   });
 }
 
+const TreeFunctionCmpDef = TreeFunction.ɵcmp as {decls: number, vars: number};
 export function TreeTpl(rf: ɵRenderFlags, ctx: TreeNode) {
   if (rf & ɵRenderFlags.Create) {
     ɵɵelementStart(0, 'tree');
     {
       ɵɵelementStart(1, 'span');
-      ɵɵstyling();
       { ɵɵtext(2); }
       ɵɵelementEnd();
       ɵɵcontainer(3);
@@ -46,15 +49,14 @@ export function TreeTpl(rf: ɵRenderFlags, ctx: TreeNode) {
     ɵɵelementEnd();
   }
   if (rf & ɵRenderFlags.Update) {
-    ɵɵselect(1);
+    ɵɵadvance(1);
     ɵɵstyleProp('background-color', ctx.depth % 2 ? '' : 'grey');
-    ɵɵstylingApply();
-    ɵɵselect(2);
+    ɵɵadvance(1);
     ɵɵtextInterpolate1(' ', ctx.value, ' ');
     ɵɵcontainerRefreshStart(3);
     {
       if (ctx.left != null) {
-        let rf0 = ɵɵembeddedViewStart(0, 5, 1);
+        let rf0 = ɵɵembeddedViewStart(0, 5, 2);
         { TreeTpl(rf0, ctx.left); }
         ɵɵembeddedViewEnd();
       }
@@ -63,7 +65,7 @@ export function TreeTpl(rf: ɵRenderFlags, ctx: TreeNode) {
     ɵɵcontainerRefreshStart(4);
     {
       if (ctx.right != null) {
-        let rf0 = ɵɵembeddedViewStart(0, 5, 1);
+        let rf0 = ɵɵembeddedViewStart(0, TreeFunctionCmpDef.decls, TreeFunctionCmpDef.vars);
         { TreeTpl(rf0, ctx.right); }
         ɵɵembeddedViewEnd();
       }

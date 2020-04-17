@@ -25,7 +25,12 @@ export class CachedFileSystem implements FileSystem {
     if (!this.existsCache.has(path)) {
       this.existsCache.set(path, this.delegate.exists(path));
     }
-    return this.existsCache.get(path) !;
+    return this.existsCache.get(path)!;
+  }
+
+  invalidateCaches(path: AbsoluteFsPath) {
+    this.readFileCache.delete(path);
+    this.existsCache.delete(path);
   }
 
   readFile(path: AbsoluteFsPath): string {
@@ -48,10 +53,16 @@ export class CachedFileSystem implements FileSystem {
     }
   }
 
-  writeFile(path: AbsoluteFsPath, data: string): void {
-    this.delegate.writeFile(path, data);
+  writeFile(path: AbsoluteFsPath, data: string, exclusive?: boolean): void {
+    this.delegate.writeFile(path, data, exclusive);
     this.readFileCache.set(path, data);
     this.existsCache.set(path, true);
+  }
+
+  removeFile(path: AbsoluteFsPath): void {
+    this.delegate.removeFile(path);
+    this.readFileCache.delete(path);
+    this.existsCache.set(path, false);
   }
 
   symlink(target: AbsoluteFsPath, path: AbsoluteFsPath): void {
@@ -66,17 +77,16 @@ export class CachedFileSystem implements FileSystem {
 
   moveFile(from: AbsoluteFsPath, to: AbsoluteFsPath): void {
     this.delegate.moveFile(from, to);
+
     this.existsCache.set(from, false);
+    this.existsCache.set(to, true);
+
     if (this.readFileCache.has(from)) {
       this.readFileCache.set(to, this.readFileCache.get(from));
       this.readFileCache.delete(from);
+    } else {
+      this.readFileCache.delete(to);
     }
-    this.existsCache.set(to, true);
-  }
-
-  mkdir(path: AbsoluteFsPath): void {
-    this.delegate.mkdir(path);
-    this.existsCache.set(path, true);
   }
 
   ensureDir(path: AbsoluteFsPath): void {
@@ -86,6 +96,25 @@ export class CachedFileSystem implements FileSystem {
       path = this.dirname(path);
     }
   }
+
+  removeDeep(path: AbsoluteFsPath): void {
+    this.delegate.removeDeep(path);
+
+    // Clear out this directory and all its children from the `exists` cache.
+    for (const p of this.existsCache.keys()) {
+      if (p.startsWith(path)) {
+        this.existsCache.set(p, false);
+      }
+    }
+
+    // Clear out this directory and all its children from the `readFile` cache.
+    for (const p of this.readFileCache.keys()) {
+      if (p.startsWith(path)) {
+        this.readFileCache.delete(p);
+      }
+    }
+  }
+
 
   lstat(path: AbsoluteFsPath): FileStats {
     const stat = this.delegate.lstat(path);
@@ -102,14 +131,33 @@ export class CachedFileSystem implements FileSystem {
   }
 
   // The following methods simply call through to the delegate.
-  readdir(path: AbsoluteFsPath): PathSegment[] { return this.delegate.readdir(path); }
-  pwd(): AbsoluteFsPath { return this.delegate.pwd(); }
-  extname(path: AbsoluteFsPath|PathSegment): string { return this.delegate.extname(path); }
-  isCaseSensitive(): boolean { return this.delegate.isCaseSensitive(); }
-  isRoot(path: AbsoluteFsPath): boolean { return this.delegate.isRoot(path); }
-  isRooted(path: string): boolean { return this.delegate.isRooted(path); }
-  resolve(...paths: string[]): AbsoluteFsPath { return this.delegate.resolve(...paths); }
-  dirname<T extends PathString>(file: T): T { return this.delegate.dirname(file); }
+  readdir(path: AbsoluteFsPath): PathSegment[] {
+    return this.delegate.readdir(path);
+  }
+  pwd(): AbsoluteFsPath {
+    return this.delegate.pwd();
+  }
+  chdir(path: AbsoluteFsPath): void {
+    this.delegate.chdir(path);
+  }
+  extname(path: AbsoluteFsPath|PathSegment): string {
+    return this.delegate.extname(path);
+  }
+  isCaseSensitive(): boolean {
+    return this.delegate.isCaseSensitive();
+  }
+  isRoot(path: AbsoluteFsPath): boolean {
+    return this.delegate.isRoot(path);
+  }
+  isRooted(path: string): boolean {
+    return this.delegate.isRooted(path);
+  }
+  resolve(...paths: string[]): AbsoluteFsPath {
+    return this.delegate.resolve(...paths);
+  }
+  dirname<T extends PathString>(file: T): T {
+    return this.delegate.dirname(file);
+  }
   join<T extends PathString>(basePath: T, ...paths: string[]): T {
     return this.delegate.join(basePath, ...paths);
   }
@@ -119,7 +167,13 @@ export class CachedFileSystem implements FileSystem {
   basename(filePath: string, extension?: string|undefined): PathSegment {
     return this.delegate.basename(filePath, extension);
   }
-  realpath(filePath: AbsoluteFsPath): AbsoluteFsPath { return this.delegate.realpath(filePath); }
-  getDefaultLibLocation(): AbsoluteFsPath { return this.delegate.getDefaultLibLocation(); }
-  normalize<T extends PathString>(path: T): T { return this.delegate.normalize(path); }
+  realpath(filePath: AbsoluteFsPath): AbsoluteFsPath {
+    return this.delegate.realpath(filePath);
+  }
+  getDefaultLibLocation(): AbsoluteFsPath {
+    return this.delegate.getDefaultLibLocation();
+  }
+  normalize<T extends PathString>(path: T): T {
+    return this.delegate.normalize(path);
+  }
 }

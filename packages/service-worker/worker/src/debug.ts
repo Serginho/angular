@@ -7,8 +7,8 @@
  */
 
 import {Adapter} from './adapter';
-import {DebugLogger, Debuggable} from './api';
 import {Manifest} from './manifest';
+import {Debuggable, DebugLogger} from './api';
 
 const DEBUG_LOG_BUFFER_SIZE = 100;
 
@@ -103,7 +103,9 @@ ${msgIdle}`,
     this.debugLogA.push({value, time: this.adapter.time, context});
   }
 
-  private errorToString(err: Error): string { return `${err.name}(${err.message}, ${err.stack})`; }
+  private errorToString(err: Error): string {
+    return `${err.name}(${err.message}, ${err.stack})`;
+  }
 
   private formatDebugLog(log: DebugMessage[]): string {
     return log.map(entry => `[${this.since(entry.time)}] ${entry.value} ${entry.context}`)

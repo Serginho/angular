@@ -1,4 +1,4 @@
-# Authoring Schematics
+# Authoring schematics
 
 You can create your own schematics to operate on Angular projects.
 Library developers typically package schematics with their libraries in order to integrate them with the Angular CLI.
@@ -359,11 +359,9 @@ When you add a new named schematic to this collection, it is automatically added
 In addition to the name and description, each schematic has a `factory` property that identifies the schematic’s entry point.
 In the example, you invoke the schematic's defined functionality by calling the `helloWorld()` function in the main file,  `hello-world/index.ts`.
 
-<figure class="lightbox">
-  <div class="card">
-    <img src="generated/images/guide/schematics/collection-files.gif" alt="overview">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src="generated/images/guide/schematics/collection-files.gif" alt="overview">
+</div>
 
 Each named schematic in the collection has the following main parts.
 

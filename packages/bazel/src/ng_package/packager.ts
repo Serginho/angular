@@ -22,7 +22,9 @@ function main(args: string[]): number {
   const paramFilePath = args[0];
 
   // Bazel params may be surrounded with quotes
-  function unquoteParameter(s: string) { return s.replace(/^'(.*)'$/, '$1'); }
+  function unquoteParameter(s: string) {
+    return s.replace(/^'(.*)'$/, '$1');
+  }
 
   // Parameters are specified in the file one per line.
   const params = fs.readFileSync(paramFilePath, 'utf-8').split('\n').map(unquoteParameter);
@@ -109,7 +111,7 @@ function main(args: string[]): number {
    * @param inputPath Path to the file in the input tree.
    * @param fileContent Content of the file.
    */
-  function writeFileFromInputPath(inputPath: string, fileContent: string | Buffer) {
+  function writeFileFromInputPath(inputPath: string, fileContent: string|Buffer) {
     // We want the relative path from the given file to its ancestor "root" directory.
     // This root depends on whether the file lives in the source tree (srcDir) as a basic file
     // input to ng_package, the bin output tree (binDir) as the output of another rule, or
@@ -140,25 +142,39 @@ function main(args: string[]): number {
 
   /**
    * Relativize the path where a file is written.
-   * @param file a path containing a re-rooted segment like .esm5 or .es6
+   * @param file a path containing a re-rooted segment like .esm5
    * @param suffix the re-rooted directory
    * @param outDir path where we copy the file, relative to the out
    */
   function writeEsmFile(file: string, suffix: string, outDir: string) {
-    // Note that the specified file path is always using the posix path delimiter.
-    const root = file.substr(0, file.lastIndexOf(`${suffix}/`) + suffix.length + 1);
-    const rel = path.dirname(path.relative(path.join(root, srcDir), file));
+    function relPath(file: string, suffix: string) {
+      if (suffix) {
+        // Note that the specified file path is always using the posix path delimiter.
+        const root =
+            suffix ? file.substr(0, file.lastIndexOf(`${suffix}/`) + suffix.length + 1) : binDir;
+        return path.dirname(path.relative(path.join(root, srcDir), file));
+      } else {
+        return path.dirname(path.relative(binDir, file));
+      }
+    }
+    const rel = relPath(file, suffix);
     if (!rel.startsWith('..')) {
       copyFile(file, path.join(out, outDir), rel);
     }
   }
 
-  esm2015.forEach(file => writeEsmFile(file, '.es6', 'esm2015'));
+  esm2015.forEach(file => writeEsmFile(file, '', 'esm2015'));
   esm5.forEach(file => writeEsmFile(file, '.esm5', 'esm5'));
 
-  bundles.forEach(bundle => { copyFile(bundle, out, 'bundles'); });
-  fesm2015.forEach(file => { copyFile(file, out, 'fesm2015'); });
-  fesm5.forEach(file => { copyFile(file, out, 'fesm5'); });
+  bundles.forEach(bundle => {
+    copyFile(bundle, out, 'bundles');
+  });
+  fesm2015.forEach(file => {
+    copyFile(file, out, 'fesm2015');
+  });
+  fesm5.forEach(file => {
+    copyFile(file, out, 'fesm5');
+  });
 
   // Copy all type definitions into the package. This is necessary so that developers can use
   // the package with type definitions.
@@ -178,9 +194,14 @@ function main(args: string[]): number {
     moduleFiles['esm5_index'] = path.join(binDir, 'esm5', relative);
     moduleFiles['esm2015_index'] = path.join(binDir, 'esm2015', relative);
 
+    // Metadata file is optional as entry-points can be also built
+    // with the "ts_library" rule.
     const metadataFile = moduleFiles['metadata'];
-    const typingsOutFile = moduleFiles['typings'];
+    if (!metadataFile) {
+      return;
+    }
 
+    const typingsOutFile = moduleFiles['typings'];
     // We only support all modules within a package to be dts bundled
     // ie: if @angular/common/http has flat dts, so should @angular/common
     if (dtsBundles.length) {
@@ -220,7 +241,7 @@ function main(args: string[]): number {
     // Modify package.json files as necessary for publishing
     if (path.basename(src) === 'package.json') {
       const packageJson = JSON.parse(content);
-      content = amendPackageJson(src, packageJson);
+      content = amendPackageJson(src, packageJson, false);
 
       const packageName = packageJson['name'];
       packagesWithExistingPackageJson.add(packageName);
@@ -240,8 +261,13 @@ function main(args: string[]): number {
     const entryPointName = entryPointPackageName.substr(rootPackageName.length + 1);
     if (!entryPointName) return;
 
-    createMetadataReexportFile(
-        entryPointName, modulesManifest[entryPointPackageName]['metadata'], entryPointPackageName);
+    const metadataFilePath = modulesManifest[entryPointPackageName]['metadata'];
+    if (metadataFilePath) {
+      createMetadataReexportFile(
+          entryPointName, modulesManifest[entryPointPackageName]['metadata'],
+          entryPointPackageName);
+    }
+
     createTypingsReexportFile(
         entryPointName, licenseBanner, modulesManifest[entryPointPackageName]['typings']);
 
@@ -266,19 +292,22 @@ function main(args: string[]): number {
 
   function copyFile(file: string, baseDir: string, relative = '.') {
     const dir = path.join(baseDir, relative);
+    // output file is .js if the input file is .mjs
+    const outFile = path.posix.join(
+        dir, path.basename(file.endsWith('.mjs') ? file.replace(/\.mjs$/, '.js') : file));
     shx.mkdir('-p', dir);
-    shx.cp(file, dir);
+    shx.cp(file, outFile);
     // Double-underscore is used to escape forward slash in FESM filenames.
     // See ng_package.bzl:
     //   fesm_output_filename = entry_point.replace("/", "__")
     // We need to unescape these.
-    if (file.indexOf('__') >= 0) {
-      const outputPath = path.join(dir, ...path.basename(file).split('__'));
+    if (outFile.indexOf('__') >= 0) {
+      const outputPath = path.join(dir, ...path.basename(outFile).split('__'));
       shx.mkdir('-p', path.dirname(outputPath));
       shx.mv(path.join(dir, path.basename(file)), outputPath);
 
       // if we are renaming the .js file, we'll also need to update the sourceMappingURL in the file
-      if (file.endsWith('.js')) {
+      if (outFile.endsWith('.js')) {
         shx.chmod('+w', outputPath);
         shx.sed('-i', `${path.basename(file)}.map`, `${path.basename(outputPath)}.map`, outputPath);
       }
@@ -291,11 +320,19 @@ function main(args: string[]): number {
    *
    * @param packageJson The path to the package.json file.
    * @param parsedPackage Parsed package.json content
+   * @param isGeneratedPackageJson Whether the passed package.json has been generated.
    */
-  function amendPackageJson(packageJson: string, parsedPackage: {[key: string]: string}) {
+  function amendPackageJson(
+      packageJson: string, parsedPackage: {[key: string]: string},
+      isGeneratedPackageJson: boolean) {
     const packageName = parsedPackage['name'];
-    const moduleFiles = modulesManifest[packageName];
-    if (!moduleFiles) {
+    const moduleData = modulesManifest[packageName];
+
+    // We don't want to modify the "package.json" if we guessed the entry-point
+    // paths and there is a custom "package.json" for that package already. Module
+    // data will be only undefined if the package name comes from a non-generated
+    // "package.json". In that case we want to leave the file untouched as well.
+    if (!moduleData || moduleData.guessedPaths && !isGeneratedPackageJson) {
       // Ideally we should throw here, as we got an entry point that doesn't
       // have flat module metadata / bundle index, so it may have been an
       // ng_module that's missing a module_name attribute.
@@ -316,9 +353,9 @@ function main(args: string[]): number {
     parsedPackage['fesm5'] = getBundleName(packageName, 'fesm5');
     parsedPackage['fesm2015'] = getBundleName(packageName, 'fesm2015');
 
-    parsedPackage['esm5'] = srcDirRelative(packageJson, moduleFiles['esm5_index']);
-    parsedPackage['esm2015'] = srcDirRelative(packageJson, moduleFiles['esm2015_index']);
-    parsedPackage['typings'] = srcDirRelative(packageJson, moduleFiles['typings']);
+    parsedPackage['esm5'] = srcDirRelative(packageJson, moduleData['esm5_index']);
+    parsedPackage['esm2015'] = srcDirRelative(packageJson, moduleData['esm2015_index']);
+    parsedPackage['typings'] = srcDirRelative(packageJson, moduleData['typings']);
 
     // For now, we point the primary entry points at the fesm files, because of Webpack
     // performance issues with a large number of individual files.
@@ -335,7 +372,7 @@ function main(args: string[]): number {
     const parts = packageName.split('/');
     // Remove the scoped package part, like @angular if present
     const nameParts = packageName.startsWith('@') ? parts.splice(1) : parts;
-    const relativePath = Array(nameParts.length - 1).fill('..').join('/') || '.';
+    const relativePath = newArray(nameParts.length - 1, '..').join('/') || '.';
     let basename: string;
     if (dir === 'bundles') {
       basename = nameParts.join('-') + '.umd';
@@ -382,7 +419,7 @@ export * from '${srcDirRelative(inputPath, typingsFile.replace(/\.d\.tsx?$/, '')
    */
   function createEntryPointPackageJson(dir: string, entryPointPackageName: string) {
     const pkgJson = path.join(srcDir, dir, 'package.json');
-    const content = amendPackageJson(pkgJson, {name: entryPointPackageName});
+    const content = amendPackageJson(pkgJson, {name: entryPointPackageName}, true);
     writeFileFromInputPath(pkgJson, content);
   }
 
@@ -390,14 +427,16 @@ export * from '${srcDirRelative(inputPath, typingsFile.replace(/\.d\.tsx?$/, '')
    * Normalizes the specified path by replacing backslash separators with Posix
    * forward slash separators.
    */
-  function normalizeSeparators(path: string): string { return path.replace(/\\/g, '/'); }
+  function normalizeSeparators(path: string): string {
+    return path.replace(/\\/g, '/');
+  }
 
   /**
-  * Rewires metadata to point to the flattened dts file.
-  *
-  * @param metadataPath the metadata file path
-  * @param typingsPath the typings bundle entrypoint
-  */
+   * Rewires metadata to point to the flattened dts file.
+   *
+   * @param metadataPath the metadata file path
+   * @param typingsPath the typings bundle entrypoint
+   */
   function rewireMetadata(metadataPath: string, typingsPath: string): string {
     const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
 
@@ -434,4 +473,14 @@ export * from '${srcDirRelative(inputPath, typingsFile.replace(/\.d\.tsx?$/, '')
 
 if (require.main === module) {
   process.exitCode = main(process.argv.slice(2));
+}
+
+export function newArray<T = any>(size: number): T[];
+export function newArray<T>(size: number, value: T): T[];
+export function newArray<T>(size: number, value?: T): T[] {
+  const list: T[] = [];
+  for (let i = 0; i < size; i++) {
+    list.push(value!);
+  }
+  return list;
 }

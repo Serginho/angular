@@ -24,19 +24,29 @@ describe('renderer factory lifecycle', () => {
 
   @Component({selector: 'some-component', template: `foo`})
   class SomeComponent implements DoCheck {
-    ngOnInit() { logs.push('some_component create'); }
-    ngDoCheck() { logs.push('some_component update'); }
+    ngOnInit() {
+      logs.push('some_component create');
+    }
+    ngDoCheck() {
+      logs.push('some_component update');
+    }
   }
 
   @Component({selector: 'some-component-with-error', template: `With error`})
   class SomeComponentWhichThrows {
-    ngOnInit() { throw new Error('SomeComponentWhichThrows threw'); }
+    ngOnInit() {
+      throw new Error('SomeComponentWhichThrows threw');
+    }
   }
 
   @Component({selector: 'lol', template: `<some-component></some-component>`})
   class TestComponent implements DoCheck {
-    ngOnInit() { logs.push('test_component create'); }
-    ngDoCheck() { logs.push('test_component update'); }
+    ngOnInit() {
+      logs.push('test_component create');
+    }
+    ngDoCheck() {
+      logs.push('test_component update');
+    }
   }
 
   /** Creates a patched renderer factory that pushes entries to the test log */
@@ -44,7 +54,7 @@ describe('renderer factory lifecycle', () => {
     let rendererFactory = getRendererFactory2(document);
     const createRender = rendererFactory.createRenderer;
 
-    rendererFactory.createRenderer = (hostElement: any, type: RendererType2 | null) => {
+    rendererFactory.createRenderer = (hostElement: any, type: RendererType2|null) => {
       logs.push('create');
       return createRender.apply(rendererFactory, [hostElement, type]);
     };
@@ -73,7 +83,6 @@ describe('renderer factory lifecycle', () => {
     fixture.detectChanges();
     expect(logs).toEqual(
         ['create', 'create', 'begin', 'some_component create', 'some_component update', 'end']);
-
     logs = [];
     fixture.detectChanges();
     expect(logs).toEqual(['begin', 'some_component update', 'end']);
@@ -169,7 +178,7 @@ describe('animation renderer factory', () => {
     ]);
     player.finish();
 
-    rendererFactory !.whenRenderingDone !().then(() => {
+    rendererFactory!.whenRenderingDone!().then(() => {
       expect(eventLogs).toEqual(['void - start', 'void - done', 'on - start', 'on - done']);
       done();
     });
@@ -198,3 +207,49 @@ function getAnimationRendererFactory2(document: any): RendererFactory2 {
           document.body, new MockAnimationDriver(), new ɵNoopAnimationStyleNormalizer()),
       fakeNgZone);
 }
+
+describe('custom renderer', () => {
+  @Component({
+    selector: 'some-component',
+    template: `<div><span></span></div>`,
+  })
+  class SomeComponent {
+  }
+
+  /**
+   * Creates a patched renderer factory that creates elements with a shape different than DOM node
+   */
+  function createPatchedRendererFactory(document: any) {
+    let rendererFactory = getRendererFactory2(document);
+    const origCreateRenderer = rendererFactory.createRenderer;
+    rendererFactory.createRenderer = function(element: any, type: RendererType2|null) {
+      const renderer = origCreateRenderer.call(this, element, type);
+      renderer.appendChild = () => {};
+      renderer.createElement = (name: string) => ({
+        name,
+        el: document.createElement(name),
+      });
+      return renderer;
+    };
+
+    return rendererFactory;
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      declarations: [SomeComponent],
+      providers: [{
+        provide: RendererFactory2,
+        useFactory: (document: any) => createPatchedRendererFactory(document),
+        deps: [DOCUMENT]
+      }]
+    });
+  });
+
+  it('should not trigger errors', () => {
+    expect(() => {
+      const fixture = TestBed.createComponent(SomeComponent);
+      fixture.detectChanges();
+    }).not.toThrow();
+  });
+});

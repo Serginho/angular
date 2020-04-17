@@ -28,7 +28,7 @@ describe('setUpLocationSync', () => {
       ],
     });
 
-    upgradeModule = TestBed.get(UpgradeModule);
+    upgradeModule = TestBed.inject(UpgradeModule);
     upgradeModule.$injector = {
       get: jasmine.createSpy('$injector.get').and.returnValue({'$on': () => undefined})
     };
@@ -119,8 +119,7 @@ describe('setUpLocationSync', () => {
 
       expect(LocationMock.normalize).toHaveBeenCalledWith('/foo/bar');
     } finally {
-      Object.defineProperty(anchorProto, 'pathname', originalDescriptor !);
+      Object.defineProperty(anchorProto, 'pathname', originalDescriptor!);
     }
   });
-
 });

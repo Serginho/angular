@@ -232,7 +232,6 @@ import {ParseLocation, ParseSourceFile, ParseSourceSpan} from '../../src/parse_u
           [lex.TokenType.EOF, ''],
         ]);
       });
-
     });
 
     describe('attributes', () => {
@@ -400,7 +399,6 @@ import {ParseLocation, ParseSourceFile, ParseSourceSpan} from '../../src/parse_u
           [lex.TokenType.ATTR_VALUE, 'Unexpected character "EOF"', '0:8'],
         ]);
       });
-
     });
 
     describe('closing tags', () => {
@@ -729,7 +727,6 @@ import {ParseLocation, ParseSourceFile, ParseSourceSpan} from '../../src/parse_u
           [lex.TokenType.EOF, ''],
         ]);
       });
-
     });
 
     describe('expansion forms', () => {
@@ -792,6 +789,30 @@ import {ParseLocation, ParseSourceFile, ParseSourceSpan} from '../../src/parse_u
               [lex.TokenType.TEXT, 'c'],
               [lex.TokenType.EXPANSION_CASE_EXP_END],
               [lex.TokenType.EXPANSION_FORM_END],
+              [lex.TokenType.TAG_CLOSE, '', 'span'],
+              [lex.TokenType.TAG_CLOSE, '', 'div'],
+              [lex.TokenType.EOF],
+            ]);
+      });
+
+      it('should parse an expansion form with whitespace surrounding it', () => {
+        expect(tokenizeAndHumanizeParts(
+                   '<div><span> {a, b, =4 {c}} </span></div>', {tokenizeExpansionForms: true}))
+            .toEqual([
+              [lex.TokenType.TAG_OPEN_START, '', 'div'],
+              [lex.TokenType.TAG_OPEN_END],
+              [lex.TokenType.TAG_OPEN_START, '', 'span'],
+              [lex.TokenType.TAG_OPEN_END],
+              [lex.TokenType.TEXT, ' '],
+              [lex.TokenType.EXPANSION_FORM_START],
+              [lex.TokenType.RAW_TEXT, 'a'],
+              [lex.TokenType.RAW_TEXT, 'b'],
+              [lex.TokenType.EXPANSION_CASE_VALUE, '=4'],
+              [lex.TokenType.EXPANSION_CASE_EXP_START],
+              [lex.TokenType.TEXT, 'c'],
+              [lex.TokenType.EXPANSION_CASE_EXP_END],
+              [lex.TokenType.EXPANSION_FORM_END],
+              [lex.TokenType.TEXT, ' '],
               [lex.TokenType.TAG_CLOSE, '', 'span'],
               [lex.TokenType.TAG_CLOSE, '', 'div'],
               [lex.TokenType.EOF],
@@ -874,7 +895,7 @@ import {ParseLocation, ParseSourceFile, ParseSourceSpan} from '../../src/parse_u
         const file = new ParseSourceFile(src, 'file://');
         const location = new ParseLocation(file, 12, 123, 456);
         const span = new ParseSourceSpan(location, location);
-        const error = new lex.TokenError('**ERROR**', null !, span);
+        const error = new lex.TokenError('**ERROR**', null!, span);
         expect(error.toString())
             .toEqual(`**ERROR** ("\n222\n333\n[ERROR ->]E\n444\n555\n"): file://@123:456`);
       });

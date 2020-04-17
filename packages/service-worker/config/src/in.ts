@@ -54,13 +54,7 @@ export interface AssetGroup {
   name: string;
   installMode?: 'prefetch'|'lazy';
   updateMode?: 'prefetch'|'lazy';
-  resources: {
-    files?: Glob[];
-    /** @deprecated As of v6 `versionedFiles` and `files` options have the same behavior. Use
-       `files` instead. */
-    versionedFiles?: Glob[];
-    urls?: Glob[];
-  };
+  resources: {files?: Glob[]; urls?: Glob[];};
 }
 
 /**
@@ -73,6 +67,8 @@ export interface DataGroup {
   urls: Glob[];
   version?: number;
   cacheConfig: {
-    maxSize: number; maxAge: Duration; timeout?: Duration; strategy?: 'freshness' | 'performance';
+    maxSize: number; maxAge: Duration;
+    timeout?: Duration;
+    strategy?: 'freshness' | 'performance';
   };
 }

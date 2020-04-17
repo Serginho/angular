@@ -8,22 +8,26 @@
 
 import * as ts from 'typescript';
 
-import {AbsoluteFsPath, absoluteFrom} from '../../file_system';
+import {absoluteFrom, AbsoluteFsPath} from '../../file_system';
 import {isNonDeclarationTsPath} from '../../util/src/typescript';
 
-import {ShimGenerator} from './host';
+import {ShimGenerator} from './api';
 import {generatedModuleName} from './util';
 
 export class SummaryGenerator implements ShimGenerator {
-  private constructor(private map: Map<AbsoluteFsPath, string>) {}
+  private constructor(private map: Map<AbsoluteFsPath, AbsoluteFsPath>) {}
 
-  getSummaryFileNames(): string[] { return Array.from(this.map.keys()); }
+  getSummaryFileNames(): AbsoluteFsPath[] {
+    return Array.from(this.map.keys());
+  }
 
-  recognize(fileName: AbsoluteFsPath): boolean { return this.map.has(fileName); }
+  recognize(fileName: AbsoluteFsPath): boolean {
+    return this.map.has(fileName);
+  }
 
   generate(genFilePath: AbsoluteFsPath, readFile: (fileName: string) => ts.SourceFile | null):
       ts.SourceFile|null {
-    const originalPath = this.map.get(genFilePath) !;
+    const originalPath = this.map.get(genFilePath)!;
     const original = readFile(originalPath);
     if (original === null) {
       return null;
@@ -45,7 +49,8 @@ export class SummaryGenerator implements ShimGenerator {
       } else if (ts.isExportDeclaration(stmt)) {
         // Look for an export statement of the form "export {...};". If it doesn't match that, then
         // skip it.
-        if (stmt.exportClause === undefined || stmt.moduleSpecifier !== undefined) {
+        if (stmt.exportClause === undefined || stmt.moduleSpecifier !== undefined ||
+            !ts.isNamedExports(stmt.exportClause)) {
           continue;
         }
 
@@ -78,7 +83,7 @@ export class SummaryGenerator implements ShimGenerator {
   }
 
   static forRootFiles(files: ReadonlyArray<AbsoluteFsPath>): SummaryGenerator {
-    const map = new Map<AbsoluteFsPath, string>();
+    const map = new Map<AbsoluteFsPath, AbsoluteFsPath>();
     files.filter(sourceFile => isNonDeclarationTsPath(sourceFile))
         .forEach(
             sourceFile =>

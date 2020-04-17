@@ -7,9 +7,10 @@
  */
 
 import {ɵɵdefineComponent} from '../../src/render3/definition';
-import {ɵɵcontainer, ɵɵcontainerRefreshEnd, ɵɵcontainerRefreshStart, ɵɵelement, ɵɵelementEnd, ɵɵelementStart, ɵɵembeddedViewEnd, ɵɵembeddedViewStart, ɵɵselect, ɵɵtext, ɵɵtextBinding} from '../../src/render3/instructions/all';
+import {ɵɵcontainer, ɵɵcontainerRefreshEnd, ɵɵcontainerRefreshStart, ɵɵelement, ɵɵelementEnd, ɵɵelementStart, ɵɵembeddedViewEnd, ɵɵembeddedViewStart, ɵɵselect, ɵɵtext, ɵɵtextInterpolate} from '../../src/render3/instructions/all';
 import {RenderFlags} from '../../src/render3/interfaces/definition';
-import {ComponentFixture, TemplateFixture, createComponent} from './render_util';
+
+import {ComponentFixture, createComponent, TemplateFixture} from './render_util';
 
 describe('JS control flow', () => {
   it('should work with if block', () => {
@@ -32,7 +33,7 @@ describe('JS control flow', () => {
               }
               if (rf1 & RenderFlags.Update) {
                 ɵɵselect(1);
-                ɵɵtextBinding(ctx.message);
+                ɵɵtextInterpolate(ctx.message);
               }
             }
             ɵɵembeddedViewEnd();
@@ -150,9 +151,10 @@ describe('JS control flow', () => {
   });
 
   it('should work with nested adjacent if blocks', () => {
-    const ctx: {condition: boolean,
-                condition2: boolean,
-                condition3: boolean} = {condition: true, condition2: false, condition3: true};
+    const ctx:
+        {condition: boolean,
+         condition2: boolean,
+         condition3: boolean} = {condition: true, condition2: false, condition3: true};
 
     /**
      * % if(ctx.condition) {
@@ -164,7 +166,9 @@ describe('JS control flow', () => {
      *   % }
      * % }
      */
-    function createTemplate() { ɵɵcontainer(0); }
+    function createTemplate() {
+      ɵɵcontainer(0);
+    }
 
     function updateTemplate() {
       ɵɵcontainerRefreshStart(0);
@@ -173,7 +177,9 @@ describe('JS control flow', () => {
           let rf1 = ɵɵembeddedViewStart(1, 2, 0);
           {
             if (rf1 & RenderFlags.Create) {
-              { ɵɵcontainer(0); }
+              {
+                ɵɵcontainer(0);
+              }
               { ɵɵcontainer(1); }
             }
             if (rf1 & RenderFlags.Update) {
@@ -221,14 +227,14 @@ describe('JS control flow', () => {
 
   it('should work with adjacent if blocks managing views in the same container', () => {
     /**
-    *   % if(ctx.condition1) {
-    *     1
-    *   % }; if(ctx.condition2) {
-    *     2
-    *   % }; if(ctx.condition3) {
-    *     3
-    *   % }
-    */
+     *   % if(ctx.condition1) {
+     *     1
+     *   % }; if(ctx.condition2) {
+     *     2
+     *   % }; if(ctx.condition3) {
+     *     3
+     *   % }
+     */
     const App = createComponent('app', function(rf: RenderFlags, ctx: any) {
       if (rf & RenderFlags.Create) {
         ɵɵcontainer(0);
@@ -345,7 +351,7 @@ describe('JS control flow', () => {
               }
               if (rf1 & RenderFlags.Update) {
                 ɵɵselect(1);
-                ɵɵtextBinding(data[i]);
+                ɵɵtextInterpolate(data[i]);
               }
             }
             ɵɵembeddedViewEnd();
@@ -410,7 +416,7 @@ describe('JS control flow', () => {
                     }
                     if (rf2 & RenderFlags.Update) {
                       ɵɵselect(0);
-                      ɵɵtextBinding(data[0][i] + value);
+                      ɵɵtextInterpolate(data[0][i] + value);
                     }
                     ɵɵembeddedViewEnd();
                   });
@@ -478,7 +484,7 @@ describe('JS control flow', () => {
               }
               if (rf1 & RenderFlags.Update) {
                 ɵɵselect(1);
-                ɵɵtextBinding(cafes[i].name);
+                ɵɵtextInterpolate(cafes[i].name);
                 ɵɵcontainerRefreshStart(2);
                 {
                   for (let j = 0; j < cafes[i].entrees.length; j++) {
@@ -488,7 +494,7 @@ describe('JS control flow', () => {
                     }
                     if (rf2 & RenderFlags.Update) {
                       ɵɵselect(0);
-                      ɵɵtextBinding(cafes[i].entrees[j]);
+                      ɵɵtextInterpolate(cafes[i].entrees[j]);
                     }
                     ɵɵembeddedViewEnd();
                   }
@@ -538,15 +544,15 @@ describe('JS control flow', () => {
      * <div>
      *   Before
      *   % for (let i = 0; i < cafes.length; i++) {
-       *      <h2> {{ cafes[i].name }} </h2>
-       *      % for (let j = 0; j < cafes[i].entrees.length; j++) {
-       *        <h3>  {{ cafes[i].entrees[j].name }} </h3>
-       *        % for (let k = 0; k < cafes[i].entrees[j].foods.length; k++) {
-       *          {{ cafes[i].entrees[j].foods[k] }}
-       *        % }
-       *      % }
-       *      -
-       *   % }
+     *      <h2> {{ cafes[i].name }} </h2>
+     *      % for (let j = 0; j < cafes[i].entrees.length; j++) {
+     *        <h3>  {{ cafes[i].entrees[j].name }} </h3>
+     *        % for (let k = 0; k < cafes[i].entrees[j].foods.length; k++) {
+     *          {{ cafes[i].entrees[j].foods[k] }}
+     *        % }
+     *      % }
+     *      -
+     *   % }
      *   After
      * <div>
      */
@@ -575,7 +581,7 @@ describe('JS control flow', () => {
               }
               if (rf1 & RenderFlags.Update) {
                 ɵɵselect(1);
-                ɵɵtextBinding(cafes[i].name);
+                ɵɵtextInterpolate(cafes[i].name);
                 ɵɵcontainerRefreshStart(2);
                 {
                   for (let j = 0; j < cafes[i].entrees.length; j++) {
@@ -589,7 +595,7 @@ describe('JS control flow', () => {
                       }
                       if (rf1 & RenderFlags.Update) {
                         ɵɵselect(1);
-                        ɵɵtextBinding(cafes[i].entrees[j].name);
+                        ɵɵtextInterpolate(cafes[i].entrees[j].name);
                         ɵɵcontainerRefreshStart(2);
                         {
                           for (let k = 0; k < cafes[i].entrees[j].foods.length; k++) {
@@ -599,7 +605,7 @@ describe('JS control flow', () => {
                             }
                             if (rf2 & RenderFlags.Update) {
                               ɵɵselect(0);
-                              ɵɵtextBinding(cafes[i].entrees[j].foods[k]);
+                              ɵɵtextInterpolate(cafes[i].entrees[j].foods[k]);
                             }
                             ɵɵembeddedViewEnd();
                           }
@@ -690,17 +696,19 @@ describe('JS control flow', () => {
     let log: string[] = [];
 
     // Intentionally duplicating the templates in test below so we are
-    // testing the behavior on firstTemplatePass for each of these tests
+    // testing the behavior on firstCreatePass for each of these tests
     class Comp {
-      static ngComponentDef = ɵɵdefineComponent({
+      static ɵfac =
+          () => {
+            log.push('comp!');
+            return new Comp();
+          }
+
+      static ɵcmp = ɵɵdefineComponent({
         type: Comp,
         selectors: [['comp']],
-        consts: 0,
+        decls: 0,
         vars: 0,
-        factory: () => {
-          log.push('comp!');
-          return new Comp();
-        },
         template: function(rf: RenderFlags, ctx: Comp) {}
       });
     }
@@ -709,43 +717,44 @@ describe('JS control flow', () => {
       condition = true;
       condition2 = true;
 
-      static ngComponentDef = ɵɵdefineComponent({
+      static ɵfac = () => new App();
+      static ɵcmp = ɵɵdefineComponent({
         type: App,
         selectors: [['app']],
-        factory: () => new App(),
-        consts: 3,
+        decls: 3,
         vars: 0,
-        template: function(rf: RenderFlags, ctx: any) {
-          if (rf & RenderFlags.Create) {
-            ɵɵelement(0, 'div');
-            ɵɵcontainer(1);
-            ɵɵcontainer(2);
-          }
-          if (rf & RenderFlags.Update) {
-            ɵɵcontainerRefreshStart(1);
-            {
-              if (ctx.condition) {
-                let rf1 = ɵɵembeddedViewStart(0, 1, 0);
-                if (rf1 & RenderFlags.Create) {
-                  ɵɵelement(0, 'comp');
-                }
-                ɵɵembeddedViewEnd();
+        template:
+            function(rf: RenderFlags, ctx: any) {
+              if (rf & RenderFlags.Create) {
+                ɵɵelement(0, 'div');
+                ɵɵcontainer(1);
+                ɵɵcontainer(2);
               }
-            }
-            ɵɵcontainerRefreshEnd();
-            ɵɵcontainerRefreshStart(2);
-            {
-              if (ctx.condition2) {
-                let rf1 = ɵɵembeddedViewStart(0, 1, 0);
-                if (rf1 & RenderFlags.Create) {
-                  ɵɵelement(0, 'comp');
+              if (rf & RenderFlags.Update) {
+                ɵɵcontainerRefreshStart(1);
+                {
+                  if (ctx.condition) {
+                    let rf1 = ɵɵembeddedViewStart(0, 1, 0);
+                    if (rf1 & RenderFlags.Create) {
+                      ɵɵelement(0, 'comp');
+                    }
+                    ɵɵembeddedViewEnd();
+                  }
                 }
-                ɵɵembeddedViewEnd();
+                ɵɵcontainerRefreshEnd();
+                ɵɵcontainerRefreshStart(2);
+                {
+                  if (ctx.condition2) {
+                    let rf1 = ɵɵembeddedViewStart(0, 1, 0);
+                    if (rf1 & RenderFlags.Create) {
+                      ɵɵelement(0, 'comp');
+                    }
+                    ɵɵembeddedViewEnd();
+                  }
+                }
+                ɵɵcontainerRefreshEnd();
               }
-            }
-            ɵɵcontainerRefreshEnd();
-          }
-        },
+            },
         directives: () => [Comp]
       });
     }
@@ -758,17 +767,19 @@ describe('JS control flow', () => {
     let log: string[] = [];
 
     // Intentionally duplicating the templates from above so we are
-    // testing the behavior on firstTemplatePass for each of these tests
+    // testing the behavior on firstCreatePass for each of these tests
     class Comp {
-      static ngComponentDef = ɵɵdefineComponent({
+      static ɵfac =
+          () => {
+            log.push('comp!');
+            return new Comp();
+          }
+
+      static ɵcmp = ɵɵdefineComponent({
         type: Comp,
         selectors: [['comp']],
-        consts: 0,
+        decls: 0,
         vars: 0,
-        factory: () => {
-          log.push('comp!');
-          return new Comp();
-        },
         template: function(rf: RenderFlags, ctx: Comp) {}
       });
     }
@@ -777,43 +788,44 @@ describe('JS control flow', () => {
       condition = false;
       condition2 = true;
 
-      static ngComponentDef = ɵɵdefineComponent({
+      static ɵfac = () => new App();
+      static ɵcmp = ɵɵdefineComponent({
         type: App,
         selectors: [['app']],
-        factory: () => new App(),
-        consts: 3,
+        decls: 3,
         vars: 0,
-        template: function(rf: RenderFlags, ctx: any) {
-          if (rf & RenderFlags.Create) {
-            ɵɵelement(0, 'div');
-            ɵɵcontainer(1);
-            ɵɵcontainer(2);
-          }
-          if (rf & RenderFlags.Update) {
-            ɵɵcontainerRefreshStart(1);
-            {
-              if (ctx.condition) {
-                let rf1 = ɵɵembeddedViewStart(0, 1, 0);
-                if (rf1 & RenderFlags.Create) {
-                  ɵɵelement(0, 'comp');
-                }
-                ɵɵembeddedViewEnd();
+        template:
+            function(rf: RenderFlags, ctx: any) {
+              if (rf & RenderFlags.Create) {
+                ɵɵelement(0, 'div');
+                ɵɵcontainer(1);
+                ɵɵcontainer(2);
               }
-            }
-            ɵɵcontainerRefreshEnd();
-            ɵɵcontainerRefreshStart(2);
-            {
-              if (ctx.condition2) {
-                let rf1 = ɵɵembeddedViewStart(0, 1, 0);
-                if (rf1 & RenderFlags.Create) {
-                  ɵɵelement(0, 'comp');
+              if (rf & RenderFlags.Update) {
+                ɵɵcontainerRefreshStart(1);
+                {
+                  if (ctx.condition) {
+                    let rf1 = ɵɵembeddedViewStart(0, 1, 0);
+                    if (rf1 & RenderFlags.Create) {
+                      ɵɵelement(0, 'comp');
+                    }
+                    ɵɵembeddedViewEnd();
+                  }
                 }
-                ɵɵembeddedViewEnd();
+                ɵɵcontainerRefreshEnd();
+                ɵɵcontainerRefreshStart(2);
+                {
+                  if (ctx.condition2) {
+                    let rf1 = ɵɵembeddedViewStart(0, 1, 0);
+                    if (rf1 & RenderFlags.Create) {
+                      ɵɵelement(0, 'comp');
+                    }
+                    ɵɵembeddedViewEnd();
+                  }
+                }
+                ɵɵcontainerRefreshEnd();
               }
-            }
-            ɵɵcontainerRefreshEnd();
-          }
-        },
+            },
         directives: () => [Comp]
       });
     }
@@ -856,7 +868,7 @@ describe('JS for loop', () => {
             }
             if (rf2 & RenderFlags.Update) {
               ɵɵselect(0);
-              ɵɵtextBinding(config.data1[i]);
+              ɵɵtextInterpolate(config.data1[i]);
             }
             ɵɵembeddedViewEnd();
           }
@@ -867,7 +879,7 @@ describe('JS for loop', () => {
             }
             if (rf2 & RenderFlags.Update) {
               ɵɵselect(0);
-              ɵɵtextBinding(config.data2[j]);
+              ɵɵtextInterpolate(config.data2[j]);
             }
             ɵɵembeddedViewEnd();
           }
@@ -897,7 +909,7 @@ describe('function calls', () => {
   it('should work', () => {
     let data: string[] = ['foo', 'bar'];
 
-    function spanify(rf: RenderFlags, ctx: {message: string | null}) {
+    function spanify(rf: RenderFlags, ctx: {message: string|null}) {
       const message = ctx.message;
       if (rf & RenderFlags.Create) {
         ɵɵelementStart(0, 'span');
@@ -906,7 +918,7 @@ describe('function calls', () => {
       }
       if (rf & RenderFlags.Update) {
         ɵɵselect(1);
-        ɵɵtextBinding(message);
+        ɵɵtextInterpolate(message);
       }
     }
 
@@ -945,6 +957,5 @@ describe('function calls', () => {
     data = [];
     fixture.update();
     expect(fixture.html).toEqual('<div>Before<span></span><span></span>After</div>');
-
   });
 });

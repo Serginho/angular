@@ -36,38 +36,32 @@ export class Generator {
       appData: config.appData,
       push: config.push,
       debug: config.debug,
-      index: joinUrls(this.baseHref, config.index), assetGroups,
+      index: joinUrls(this.baseHref, config.index),
+      assetGroups,
       dataGroups: this.processDataGroups(config),
       hashTable: withOrderedKeys(unorderedHashTable),
       navigationUrls: processNavigationUrls(this.baseHref, config.navigationUrls),
     };
   }
 
-  private async processAssetGroups(config: Config, hashTable: {[file: string]: string | undefined}):
+  private async processAssetGroups(config: Config, hashTable: {[file: string]: string|undefined}):
       Promise<Object[]> {
     const seenMap = new Set<string>();
-    return Promise.all((config.assetGroups || []).map(async(group) => {
-      if (group.resources.versionedFiles) {
-        console.warn(
-            `Asset-group '${group.name}' in 'ngsw-config.json' uses the 'versionedFiles' option.\n` +
-            'As of v6 \'versionedFiles\' and \'files\' options have the same behavior. ' +
-            'Use \'files\' instead.');
+    return Promise.all((config.assetGroups || []).map(async (group) => {
+      if ((group.resources as any).versionedFiles) {
+        throw new Error(
+            `Asset-group '${group.name}' in 'ngsw-config.json' uses the 'versionedFiles' option, ` +
+            'which is no longer supported. Use \'files\' instead.');
       }
 
       const fileMatcher = globListToMatcher(group.resources.files || []);
-      const versionedMatcher = globListToMatcher(group.resources.versionedFiles || []);
-
       const allFiles = await this.fs.list('/');
 
-      const plainFiles = allFiles.filter(fileMatcher).filter(file => !seenMap.has(file));
-      plainFiles.forEach(file => seenMap.add(file));
-
-      const versionedFiles = allFiles.filter(versionedMatcher).filter(file => !seenMap.has(file));
-      versionedFiles.forEach(file => seenMap.add(file));
+      const matchedFiles = allFiles.filter(fileMatcher).filter(file => !seenMap.has(file)).sort();
+      matchedFiles.forEach(file => seenMap.add(file));
 
       // Add the hashes.
-      const matchedFiles = [...plainFiles, ...versionedFiles].sort();
-      await matchedFiles.reduce(async(previous, file) => {
+      await matchedFiles.reduce(async (previous, file) => {
         await previous;
         const hash = await this.fs.hash(file);
         hashTable[joinUrls(this.baseHref, file)] = hash;
@@ -152,8 +146,8 @@ function joinUrls(a: string, b: string): string {
   return a + b;
 }
 
-function withOrderedKeys<T extends{[key: string]: any}>(unorderedObj: T): T {
-  const orderedObj = {} as{[key: string]: any};
+function withOrderedKeys<T extends {[key: string]: any}>(unorderedObj: T): T {
+  const orderedObj = {} as {[key: string]: any};
   Object.keys(unorderedObj).sort().forEach(key => orderedObj[key] = unorderedObj[key]);
   return orderedObj as T;
 }

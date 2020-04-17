@@ -67,21 +67,40 @@ runInEachFileSystem(() => {
       ]);
     });
 
-    describe('resolveModule()', () => {
+    describe('resolveModuleImport()', () => {
       describe('with relative paths', () => {
         it('should resolve sibling, child and aunt modules', () => {
           const resolver = new ModuleResolver(getFileSystem());
+
+          // With relative file paths.
           expect(resolver.resolveModuleImport('./x', _('/libs/local-package/index.js')))
               .toEqual(new ResolvedRelativeModule(_('/libs/local-package/x.js')));
           expect(resolver.resolveModuleImport('./sub-folder', _('/libs/local-package/index.js')))
               .toEqual(new ResolvedRelativeModule(_('/libs/local-package/sub-folder/index.js')));
           expect(resolver.resolveModuleImport('../x', _('/libs/local-package/sub-folder/index.js')))
               .toEqual(new ResolvedRelativeModule(_('/libs/local-package/x.js')));
+
+          // With absolute file paths.
+          expect(resolver.resolveModuleImport(
+                     _('/libs/local-package/x'), _('/libs/local-package/index.js')))
+              .toEqual(new ResolvedRelativeModule(_('/libs/local-package/x.js')));
+          expect(resolver.resolveModuleImport(
+                     _('/libs/local-package/sub-folder'), _('/libs/local-package/index.js')))
+              .toEqual(new ResolvedRelativeModule(_('/libs/local-package/sub-folder/index.js')));
+          expect(resolver.resolveModuleImport(
+                     _('/libs/local-package/x'), _('/libs/local-package/sub-folder/index.js')))
+              .toEqual(new ResolvedRelativeModule(_('/libs/local-package/x.js')));
         });
 
         it('should return `null` if the resolved module relative module does not exist', () => {
           const resolver = new ModuleResolver(getFileSystem());
           expect(resolver.resolveModuleImport('./y', _('/libs/local-package/index.js'))).toBe(null);
+        });
+
+        it('should resolve modules that already include an extension', () => {
+          const resolver = new ModuleResolver(getFileSystem());
+          expect(resolver.resolveModuleImport('./x.js', _('/libs/local-package/index.js')))
+              .toEqual(new ResolvedRelativeModule(_('/libs/local-package/x.js')));
         });
       });
 

@@ -3,6 +3,12 @@
 Every application starts out with what seems like a simple task: get data, transform them, and show them to users.
 Getting data could be as simple as creating a local variable or as complex as streaming data over a WebSocket.
 
+<div class="alert is-helpful">
+
+  For the sample app that this page describes, see the <live-example></live-example>.
+
+</div>
+
 Once data arrives, you could push their raw `toString` values directly to the view,
 but that rarely makes for a good user experience.
 For example, in most use cases, users prefer to see a date in a simple format like
@@ -15,8 +21,6 @@ You can almost think of them as styles.
 In fact, you might like to apply them in your HTML templates as you do styles.
 
 Introducing Angular pipes, a way to write display-value transformations that you can declare in your HTML.
-
-You can run the <live-example></live-example> in Stackblitz and download the code from there.
 
 
 ## Using pipes
@@ -106,13 +110,9 @@ As you click the button, the displayed date alternates between
 "**<samp>04/15/1988</samp>**" and
 "**<samp>Friday, April 15, 1988</samp>**".
 
-
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/pipes/date-format-toggle-anim.gif' alt="Date Format Toggle">
-  </div>
-</figure>
-
+<div class="lightbox">
+  <img src='generated/images/guide/pipes/date-format-toggle-anim.gif' alt="Date Format Toggle">
+</div>
 
 
 <div class="alert is-helpful">
@@ -188,11 +188,9 @@ Now you need a component to demonstrate the pipe.
 
 <code-example path="pipes/src/app/power-booster.component.ts" header="src/app/power-booster.component.ts"></code-example>
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/pipes/power-booster.png' alt="Power Booster">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/pipes/power-booster.png' alt="Power Booster">
+</div>
 
 
 
@@ -234,11 +232,9 @@ your pipe and two-way data binding with `ngModel`.
 
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/pipes/power-boost-calculator-anim.gif' alt="Power Boost Calculator">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/pipes/power-boost-calculator-anim.gif' alt="Power Boost Calculator">
+</div>
 
 
 
@@ -313,11 +309,9 @@ The Flying Heroes application extends the
 code with checkbox switches and additional displays to help you experience these effects.
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/pipes/flying-heroes-anim.gif' alt="Flying Heroes">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/pipes/flying-heroes-anim.gif' alt="Flying Heroes">
+</div>
 
 
 
@@ -494,11 +488,9 @@ both requesting the heroes from the `heroes.json` file.
 The component renders as the following:
 
 
-<figure class="lightbox">
-  <div class="card">
-    <img src='generated/images/guide/pipes/hero-list.png' alt="Hero List">
-  </div>
-</figure>
+<div class="lightbox">
+  <img src='generated/images/guide/pipes/hero-list.png' alt="Hero List">
+</div>
 
 
 

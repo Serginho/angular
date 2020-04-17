@@ -66,7 +66,9 @@ export const enum I18nMutateOpCode {
 export const ELEMENT_MARKER: ELEMENT_MARKER = {
   marker: 'element'
 };
-export interface ELEMENT_MARKER { marker: 'element'; }
+export interface ELEMENT_MARKER {
+  marker: 'element';
+}
 
 /**
  * Marks that the next string is for comment.
@@ -77,7 +79,9 @@ export const COMMENT_MARKER: COMMENT_MARKER = {
   marker: 'comment'
 };
 
-export interface COMMENT_MARKER { marker: 'comment'; }
+export interface COMMENT_MARKER {
+  marker: 'comment';
+}
 
 /**
  * Array storing OpCode for dynamically creating `i18n` blocks.
@@ -200,10 +204,10 @@ export const enum I18nUpdateOpCode {
  * Assume
  * ```ts
  *   if (rf & RenderFlags.Update) {
- *    i18nExp(bind(ctx.exp1)); // If changed set mask bit 1
- *    i18nExp(bind(ctx.exp2)); // If changed set mask bit 2
- *    i18nExp(bind(ctx.exp3)); // If changed set mask bit 3
- *    i18nExp(bind(ctx.exp4)); // If changed set mask bit 4
+ *    i18nExp(ctx.exp1); // If changed set mask bit 1
+ *    i18nExp(ctx.exp2); // If changed set mask bit 2
+ *    i18nExp(ctx.exp3); // If changed set mask bit 3
+ *    i18nExp(ctx.exp4); // If changed set mask bit 4
  *    i18nApply(0);            // Apply all changes by executing the OpCodes.
  *  }
  * ```

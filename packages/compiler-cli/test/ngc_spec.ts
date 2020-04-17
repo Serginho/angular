@@ -11,7 +11,7 @@ import * as path from 'path';
 import * as ts from 'typescript';
 
 import {main, readCommandLineAndConfiguration, watchMode} from '../src/main';
-import {setup} from './test_support';
+import {setup, stripAnsi} from './test_support';
 
 describe('ngc transformer command-line', () => {
   let basePath: string;
@@ -41,7 +41,9 @@ describe('ngc transformer command-line', () => {
     basePath = support.basePath;
     outDir = path.join(basePath, 'built');
     process.chdir(basePath);
-    write = (fileName: string, content: string) => { support.write(fileName, content); };
+    write = (fileName: string, content: string) => {
+      support.write(fileName, content);
+    };
 
     write('tsconfig-base.json', `{
       "compilerOptions": {
@@ -59,6 +61,9 @@ describe('ngc transformer command-line', () => {
         "moduleResolution": "node",
         "lib": ["es6", "dom"],
         "typeRoots": ["node_modules/@types"]
+      },
+      "angularCompilerOptions": {
+        "enableIvy": false
       }
     }`);
   });
@@ -86,14 +91,16 @@ describe('ngc transformer command-line', () => {
     errorSpy.and.stub();
 
     const exitCode = main(['-p', basePath], errorSpy);
-    expect(errorSpy).toHaveBeenCalledWith(
-        `test.ts(1,1): error TS1128: Declaration or statement expected.\r\n`);
+    const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+    expect(errorText).toContain(
+        `test.ts:1:1 - error TS1128: Declaration or statement expected.\r\n`);
     expect(exitCode).toBe(1);
   });
 
   describe('errors', () => {
-
-    beforeEach(() => { errorSpy.and.stub(); });
+    beforeEach(() => {
+      errorSpy.and.stub();
+    });
 
     it('should not print the stack trace if user input file does not exist', () => {
       writeConfig(`{
@@ -102,7 +109,8 @@ describe('ngc transformer command-line', () => {
       }`);
 
       const exitCode = main(['-p', basePath], errorSpy);
-      expect(errorSpy).toHaveBeenCalledWith(
+      const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+      expect(errorText).toContain(
           `error TS6053: File '` + path.posix.join(basePath, 'test.ts') + `' not found.` +
           '\n');
       expect(exitCode).toEqual(1);
@@ -113,8 +121,9 @@ describe('ngc transformer command-line', () => {
       write('test.ts', 'foo;');
 
       const exitCode = main(['-p', basePath], errorSpy);
-      expect(errorSpy).toHaveBeenCalledWith(
-          `test.ts(1,1): error TS2304: Cannot find name 'foo'.` +
+      const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+      expect(errorText).toContain(
+          `test.ts:1:1 - error TS2304: Cannot find name 'foo'.` +
           '\n');
       expect(exitCode).toEqual(1);
     });
@@ -124,8 +133,9 @@ describe('ngc transformer command-line', () => {
       write('test.ts', `import {MyClass} from './not-exist-deps';`);
 
       const exitCode = main(['-p', basePath], errorSpy);
-      expect(errorSpy).toHaveBeenCalledWith(
-          `test.ts(1,23): error TS2307: Cannot find module './not-exist-deps'.` +
+      const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+      expect(errorText).toContain(
+          `test.ts:1:23 - error TS2307: Cannot find module './not-exist-deps'.` +
           '\n');
       expect(exitCode).toEqual(1);
     });
@@ -136,8 +146,9 @@ describe('ngc transformer command-line', () => {
       write('test.ts', `import {MyClass} from './empty-deps';`);
 
       const exitCode = main(['-p', basePath], errorSpy);
-      expect(errorSpy).toHaveBeenCalledWith(
-          `test.ts(1,9): error TS2305: Module '"./empty-deps"' has no exported member 'MyClass'.\n`);
+      const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+      expect(errorText).toContain(
+          `test.ts:1:9 - error TS2305: Module '"./empty-deps"' has no exported member 'MyClass'.\n`);
       expect(exitCode).toEqual(1);
     });
 
@@ -150,9 +161,10 @@ describe('ngc transformer command-line', () => {
       `);
 
       const exitCode = main(['-p', basePath], errorSpy);
-      expect(errorSpy).toHaveBeenCalledWith(
-          'test.ts(3,9): error TS2349: Cannot invoke an expression whose type lacks a call signature. ' +
-          'Type \'String\' has no compatible call signatures.\n');
+      const errorText = stripAnsi(errorSpy.calls.mostRecent().args[0]);
+      expect(errorText).toContain(
+          'test.ts:3:9 - error TS2349: This expression is not callable.\n' +
+          '  Type \'String\' has no call signatures.\n');
       expect(exitCode).toEqual(1);
     });
 
@@ -222,7 +234,6 @@ describe('ngc transformer command-line', () => {
   });
 
   describe('compile ngfactory files', () => {
-
     it('should compile ngfactory files that are not referenced by root files', () => {
       writeConfig(`{
           "extends": "./tsconfig-base.json",
@@ -1113,7 +1124,6 @@ describe('ngc transformer command-line', () => {
     });
 
     describe('with external symbol re-exports enabled', () => {
-
       it('should be able to compile multiple libraries with summaries', () => {
         // Note: we need to emit the generated code for the libraries
         // into the node_modules, as that is the only way that we
@@ -1550,11 +1560,15 @@ describe('ngc transformer command-line', () => {
       originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
       jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
       const timerToken = 100;
-      spyOn(ts.sys, 'setTimeout').and.callFake((callback: () => void) => {
+      // TODO: @JiaLiPassion, need to wait @types/jasmine to handle optional method case
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/43486
+      spyOn(ts.sys as any, 'setTimeout').and.callFake((callback: () => void) => {
         timer = callback;
         return timerToken;
       });
-      spyOn(ts.sys, 'clearTimeout').and.callFake((token: number) => {
+      // TODO: @JiaLiPassion, need to wait @types/jasmine to handle optional method case
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/43486
+      spyOn(ts.sys as any, 'clearTimeout').and.callFake((token: number) => {
         if (token == timerToken) {
           timer = undefined;
         }
@@ -1606,7 +1620,9 @@ describe('ngc transformer command-line', () => {
       `);
     });
 
-    afterEach(() => { jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout; });
+    afterEach(() => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
+    });
 
     function writeAppConfig(location: string) {
       writeConfig(`{
@@ -1661,11 +1677,13 @@ describe('ngc transformer command-line', () => {
         `);
        }));
 
-    it('should recompile when the html file changes',
-       expectRecompile(() => { write('greet.html', '<p> Hello {{name}} again!</p>'); }));
+    it('should recompile when the html file changes', expectRecompile(() => {
+         write('greet.html', '<p> Hello {{name}} again!</p>');
+       }));
 
-    it('should recompile when the css file changes',
-       expectRecompile(() => { write('greet.css', `p.greeting { color: blue }`); }));
+    it('should recompile when the css file changes', expectRecompile(() => {
+         write('greet.css', `p.greeting { color: blue }`);
+       }));
   });
 
   describe('regressions', () => {
@@ -2030,8 +2048,8 @@ describe('ngc transformer command-line', () => {
       expect(exitCode).toBe(1, 'Compile was expected to fail');
       const srcPathWithSep = `lib/`;
       expect(messages[0])
-          .toEqual(
-              `${srcPathWithSep}test.component.ts(6,21): Error during template compile of 'TestComponent'
+          .toEqual(`${
+              srcPathWithSep}test.component.ts(6,21): Error during template compile of 'TestComponent'
   Tagged template expressions are not supported in metadata in 't1'
     't1' references 't2' at ${srcPathWithSep}indirect1.ts(3,27)
       't2' contains the error at ${srcPathWithSep}indirect2.ts(4,27).
@@ -2040,7 +2058,6 @@ describe('ngc transformer command-line', () => {
   });
 
   describe('tree shakeable services', () => {
-
     function compileService(source: string): string {
       write('service.ts', source);
 
@@ -2079,7 +2096,7 @@ describe('ngc transformer command-line', () => {
         })
         export class ServiceModule {}
         `);
-        expect(source).not.toMatch(/ngInjectableDef/);
+        expect(source).not.toMatch(/ɵprov/);
       });
       it('on a service with a base class service', () => {
         const source = compileService(`
@@ -2099,7 +2116,7 @@ describe('ngc transformer command-line', () => {
         })
         export class ServiceModule {}
         `);
-        expect(source).not.toMatch(/ngInjectableDef/);
+        expect(source).not.toMatch(/ɵprov/);
       });
     });
 
@@ -2113,21 +2130,20 @@ describe('ngc transformer command-line', () => {
         })
         export class Service {}
       `);
-      expect(source).toMatch(/ngInjectableDef = .+\.ɵɵdefineInjectable\(/);
-      expect(source).toMatch(/ngInjectableDef.*token: Service/);
-      expect(source).toMatch(/ngInjectableDef.*providedIn: .+\.Module/);
+      expect(source).toMatch(/ɵprov = .+\.ɵɵdefineInjectable\(/);
+      expect(source).toMatch(/ɵprov.*token: Service/);
+      expect(source).toMatch(/ɵprov.*providedIn: .+\.Module/);
     });
 
-    it('ngInjectableDef in es5 mode is annotated @nocollapse when closure options are enabled',
-       () => {
-         writeConfig(`{
+    it('ɵprov in es5 mode is annotated @nocollapse when closure options are enabled', () => {
+      writeConfig(`{
         "extends": "./tsconfig-base.json",
         "angularCompilerOptions": {
           "annotateForClosureCompiler": true
         },
         "files": ["service.ts"]
       }`);
-         const source = compileService(`
+      const source = compileService(`
         import {Injectable} from '@angular/core';
         import {Module} from './module';
 
@@ -2136,8 +2152,8 @@ describe('ngc transformer command-line', () => {
         })
         export class Service {}
       `);
-         expect(source).toMatch(/\/\*\* @nocollapse \*\/ Service\.ngInjectableDef =/);
-       });
+      expect(source).toMatch(/\/\*\* @nocollapse \*\/ Service\.ɵprov =/);
+    });
 
     it('compiles a useValue InjectableDef', () => {
       const source = compileService(`
@@ -2152,7 +2168,7 @@ describe('ngc transformer command-line', () => {
         })
         export class Service {}
       `);
-      expect(source).toMatch(/ngInjectableDef.*return CONST_SERVICE/);
+      expect(source).toMatch(/ɵprov.*return CONST_SERVICE/);
     });
 
     it('compiles a useExisting InjectableDef', () => {
@@ -2169,7 +2185,7 @@ describe('ngc transformer command-line', () => {
         })
         export class Service {}
       `);
-      expect(source).toMatch(/ngInjectableDef.*return ..\.ɵɵinject\(Existing\)/);
+      expect(source).toMatch(/ɵprov.*return ..\.ɵɵinject\(Existing\)/);
     });
 
     it('compiles a useFactory InjectableDef with optional dep', () => {
@@ -2189,7 +2205,7 @@ describe('ngc transformer command-line', () => {
           constructor(e: Existing|null) {}
         }
       `);
-      expect(source).toMatch(/ngInjectableDef.*return ..\(..\.ɵɵinject\(Existing, 8\)/);
+      expect(source).toMatch(/ɵprov.*return ..\(..\.ɵɵinject\(Existing, 8\)/);
     });
 
     it('compiles a useFactory InjectableDef with skip-self dep', () => {
@@ -2209,7 +2225,7 @@ describe('ngc transformer command-line', () => {
           constructor(e: Existing) {}
         }
       `);
-      expect(source).toMatch(/ngInjectableDef.*return ..\(..\.ɵɵinject\(Existing, 4\)/);
+      expect(source).toMatch(/ɵprov.*return ..\(..\.ɵɵinject\(Existing, 4\)/);
     });
 
     it('compiles a service that depends on a token', () => {
@@ -2226,9 +2242,9 @@ describe('ngc transformer command-line', () => {
           constructor(@Inject(TOKEN) value: boolean) {}
         }
       `);
-      expect(source).toMatch(/ngInjectableDef = .+\.ɵɵdefineInjectable\(/);
-      expect(source).toMatch(/ngInjectableDef.*token: Service/);
-      expect(source).toMatch(/ngInjectableDef.*providedIn: .+\.Module/);
+      expect(source).toMatch(/ɵprov = .+\.ɵɵdefineInjectable\(/);
+      expect(source).toMatch(/ɵprov.*token: Service/);
+      expect(source).toMatch(/ɵprov.*providedIn: .+\.Module/);
     });
 
     it('generates exports.* references when outputting commonjs', () => {
@@ -2282,5 +2298,56 @@ describe('ngc transformer command-line', () => {
     `);
     let exitCode = main(['-p', path.join(basePath, 'tsconfig.json')], errorSpy);
     expect(exitCode).toEqual(0);
+  });
+
+  describe('base directives', () => {
+    it('should allow directives with no selector that are not in NgModules', () => {
+      // first only generate .d.ts / .js / .metadata.json files
+      writeConfig(`{
+          "extends": "./tsconfig-base.json",
+          "files": ["main.ts"]
+        }`);
+      write('main.ts', `
+          import {Directive} from '@angular/core';
+
+          @Directive({})
+          export class BaseDir {}
+
+          @Directive({})
+          export abstract class AbstractBaseDir {}
+
+          @Directive()
+          export abstract class EmptyDir {}
+      `);
+      let exitCode = main(['-p', path.join(basePath, 'tsconfig.json')], errorSpy);
+      expect(exitCode).toEqual(0);
+    });
+
+    it('should be able to use abstract directive in other compilation units', () => {
+      writeConfig();
+      write('lib1/tsconfig.json', JSON.stringify({
+        extends: '../tsconfig-base.json',
+        compilerOptions: {rootDir: '.', outDir: '../node_modules/lib1_built'},
+      }));
+      write('lib1/index.ts', `
+        import {Directive} from '@angular/core';
+
+        @Directive()
+        export class BaseClass {}
+      `);
+      write('index.ts', `
+        import {NgModule, Directive} from '@angular/core';
+        import {BaseClass} from 'lib1_built';
+
+        @Directive({selector: 'my-dir'})
+        export class MyDirective extends BaseClass {}
+
+        @NgModule({declarations: [MyDirective]})
+        export class AppModule {}
+      `);
+
+      expect(main(['-p', path.join(basePath, 'lib1/tsconfig.json')], errorSpy)).toBe(0);
+      expect(main(['-p', path.join(basePath, 'tsconfig.json')], errorSpy)).toBe(0);
+    });
   });
 });
