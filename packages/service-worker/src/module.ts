@@ -7,8 +7,8 @@
  */
 
 import {isPlatformBrowser} from '@angular/common';
-import {APP_INITIALIZER, ApplicationRef, InjectionToken, Injector, ModuleWithProviders, NgModule, NgZone, PLATFORM_ID} from '@angular/core';
-import {merge, Observable, of} from 'rxjs';
+import {APP_INITIALIZER, ApplicationRef, InjectionToken, Injector, ModuleWithProviders, NgModule, PLATFORM_ID} from '@angular/core';
+import {Observable, of} from 'rxjs';
 import {delay, filter, take} from 'rxjs/operators';
 
 import {NgswCommChannel} from './low_level';
@@ -55,12 +55,8 @@ export abstract class SwRegistrationOptions {
    * registered (e.g. there might be a long-running timeout or polling interval, preventing the app
    * to stabilize). The available option are:
    *
-   * - `registerWhenStable:<timeout>`: Register as soon as the application stabilizes (no pending
-   *     micro-/macro-tasks) but no later than `<timeout>` milliseconds. If the app hasn't
-   *     stabilized after `<timeout>` milliseconds (for example, due to a recurrent asynchronous
-   *     task), the ServiceWorker will be registered anyway.
-   *     If `<timeout>` is omitted, the ServiceWorker will only be registered once the app
-   *     stabilizes.
+   * - `registerWhenStable`: Register as soon as the application stabilizes (no pending
+   *      micro-/macro-tasks).
    * - `registerImmediately`: Register immediately.
    * - `registerWithDelay:<timeout>`: Register with a delay of `<timeout>` milliseconds. For
    *     example, use `registerWithDelay:5000` to register the ServiceWorker after 5 seconds. If
@@ -100,19 +96,17 @@ export function ngswAppInitializer(
     if (typeof options.registrationStrategy === 'function') {
       readyToRegister$ = options.registrationStrategy();
     } else {
-      const [strategy, ...args] =
-          (options.registrationStrategy || 'registerWhenStable:30000').split(':');
-
+      const [strategy, ...args] = (options.registrationStrategy || 'registerWhenStable').split(':');
       switch (strategy) {
         case 'registerImmediately':
           readyToRegister$ = of(null);
           break;
         case 'registerWithDelay':
-          readyToRegister$ = delayWithTimeout(+args[0] || 0);
+          readyToRegister$ = of(null).pipe(delay(+args[0] || 0));
           break;
         case 'registerWhenStable':
-          readyToRegister$ = !args[0] ? whenStable(injector) :
-                                        merge(whenStable(injector), delayWithTimeout(+args[0]));
+          const appRef = injector.get<ApplicationRef>(ApplicationRef);
+          readyToRegister$ = appRef.isStable.pipe(filter(stable => stable));
           break;
         default:
           // Unknown strategy.
@@ -122,26 +116,12 @@ export function ngswAppInitializer(
     }
 
     // Don't return anything to avoid blocking the application until the SW is registered.
-    // Also, run outside the Angular zone to avoid preventing the app from stabilizing (especially
-    // given that some registration strategies wait for the app to stabilize).
     // Catch and log the error if SW registration fails to avoid uncaught rejection warning.
-    const ngZone = injector.get(NgZone);
-    ngZone.runOutsideAngular(
-        () => readyToRegister$.pipe(take(1)).subscribe(
-            () =>
-                navigator.serviceWorker.register(script, {scope: options.scope})
-                    .catch(err => console.error('Service worker registration failed with:', err))));
+    readyToRegister$.pipe(take(1)).subscribe(
+        () => navigator.serviceWorker.register(script, {scope: options.scope})
+                  .catch(err => console.error('Service worker registration failed with:', err)));
   };
   return initializer;
-}
-
-function delayWithTimeout(timeout: number): Observable<unknown> {
-  return of(null).pipe(delay(timeout));
-}
-
-function whenStable(injector: Injector): Observable<unknown> {
-  const appRef = injector.get(ApplicationRef);
-  return appRef.isStable.pipe(filter(stable => stable));
 }
 
 export function ngswCommChannelFactory(

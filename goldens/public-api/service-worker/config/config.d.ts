@@ -12,8 +12,10 @@ export declare interface Config {
     appData?: {};
     assetGroups?: AssetGroup[];
     dataGroups?: DataGroup[];
+    debug?: DebugConfig;
     index: string;
     navigationUrls?: string[];
+    push?: PushConfig;
 }
 
 export declare interface DataGroup {

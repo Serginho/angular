@@ -1,8 +1,8 @@
-# In-app navigation with routing
+# In-app navigation: routing to views
 
-You want the applications you build to be as fast and responsive as possible.
-In Angular, a common best practice to improve responsiveness is to build _singe-page apps_.
-With single-page apps, your users stay on a single page, but their view of that page changes depending on what the user wants to do.
+In a single-page app, you change what the user sees by showing or hiding portions of the display that correspond to particular components, rather than going out to the server to get a new page.
+As users perform application tasks, they need to move between the different [views](guide/glossary#view "Definition of view") that you have defined.
+To implement this kind of navigation within the single page of your app, you use the Angular **`Router`**.
 
 To handle the navigation from one [view](guide/glossary#view) to the next, you use the Angular _router_.
 The router enables navigation by interpreting a browser URL as an instruction to change the view.
@@ -169,7 +169,7 @@ To get information from a route:
 
       <code-example header="In the component (excerpt)">
         ngOnInit() {
-          this.activatedRoute.queryParams.subscribe(params => {
+          this.route.queryParams.subscribe(params => {
             this.name = params['name'];
           });
         }
@@ -357,130 +357,12 @@ Inject `ActivatedRoute` and `Router` in the constructor of the component class s
 
 {@a lazy-loading}
 
-## Lazy loading modules
+## Lazy loading
 
-To lazy load Angular modules, use `loadchildren` (instead of `component`) in your `AppRoutingModule` `routes` configuration as follows:
+You can configure your routes to lazy load modules, which means that Angular only loads modules as needed, rather than loading all modules when the app launches.
+Additionally, you can preload parts of your app in the background to improve the user experience.
 
-<code-example header="AppRoutingModule (excerpt)">
-
-const routes: Routes = [
-  {
-    path: 'items',
-    loadChildren: () => import('./items/items.module').then(m => m.ItemsModule)
-  }
-];
-
-</code-example>
-
-In the lazy loaded module's routing module, add a route for the component.
-
-<code-example header="Routing module for lazy loaded module (excerpt)">
-
-const routes: Routes = [
-  {
-    path: '',
-    component: ItemsComponent
-  }
-];
-
-</code-example>
-
-Also be sure to remove the `ItemsModule` from the `AppModule`. For more information on lazy loading modules see [Lazy-loading feature modules](guide/lazy-loading-ngmodules).
-
-
-{@a preloading}
-
-## Preloading
-
-Preloading improves UX by loading parts of your app in the background. You can preload modules or component data.
-
-### Preloading modules
-
-To enable preloading of all lazy loaded modules, import the `PreloadAllModules` token from the Angular `router`.
-
-<code-example header="AppRoutingModule (excerpt)">
-
-import { PreloadAllModules } from '@angular/router';
-
-</code-example>
-
-Still in the `AppRoutingModule`, specify your preloading strategy in `forRoot()`.
-
-<code-example header="AppRoutingModule (excerpt)">
-
-RouterModule.forRoot(
-  appRoutes,
-  {
-    preloadingStrategy: PreloadAllModules
-  }
-)
-
-</code-example>
-
-### Preloading component data
-
-You can preload component data so that all elements and data on a page render at the same time when the user activates a route. To preload component data, you can use a `resolver`.
-
-#### Resolvers
-
-Create a resolver service. With the CLI, the command to generate a service is as follows:
-
-
-<code-example language="none" class="code-shell">
-  ng generate service <service-name>
-</code-example>
-
-In your service, import the following router members, implement `Resolve`, and inject the `Router` service:
-
-<code-example header="Resolver service (excerpt)">
-
-import { Resolve } from '@angular/router';
-
-...
-
-export class CrisisDetailResolverService implements Resolve<> {
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<> {
-    // your logic goes here
-  }
-}
-
-</code-example>
-
-Import this resolver into your module's routing module.
-
-<code-example header="Feature module's routing module (excerpt)">
-
-import { YourResolverService }    from './your-resolver.service';
-
-</code-example>
-
-Add a `resolve` object to the component's `route` configuration.
-
-<code-example header="Feature module's routing module (excerpt)">
-{
-  path: '/your-path',
-  component: YourComponent,
-  resolve: {
-    crisis: YourResolverService
-  }
-}
-</code-example>
-
-
-In the component, use an observable to get the data from the `ActivatedRoute`.
-
-
-<code-example header="Component (excerpt)">
-ngOnInit() {
-  this.route.data
-    .subscribe((your-parameters) => {
-      // your data-specific code goes here
-    });
-}
-</code-example>
-
-For more information with a working example, see the [routing tutorial section on preloading](guide/router#preloading-background-loading-of-feature-areas).
-
+For more information on lazy loading and preloading see the dedicated guide [Lazy loading NgModules](guide/lazy-loading-ngmodules).
 
 ## Preventing unauthorized access
 
@@ -1105,7 +987,7 @@ The application continues to work just the same, and you can use `AppRoutingModu
 
 The routing module, often called the `AppRoutingModule`, replaces the routing configuration in the root or feature module.
 
-The routing module is helpful as your app growns and when the configuration includes specialized guard and resolver services.
+The routing module is helpful as your app grows and when the configuration includes specialized guard and resolver services.
 
 Some developers skip the routing module when the configuration is minimal and merge the routing configuration directly into the companion module (for example, `AppModule`).
 

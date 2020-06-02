@@ -31,7 +31,7 @@ export const TVIEW = 1;
 export const FLAGS = 2;
 export const PARENT = 3;
 export const NEXT = 4;
-export const QUERIES = 5;
+export const TRANSPLANTED_VIEWS_TO_REFRESH = 5;
 export const T_HOST = 6;
 export const CLEANUP = 7;
 export const CONTEXT = 8;
@@ -45,8 +45,9 @@ export const DECLARATION_VIEW = 15;
 export const DECLARATION_COMPONENT_VIEW = 16;
 export const DECLARATION_LCONTAINER = 17;
 export const PREORDER_HOOK_FLAGS = 18;
+export const QUERIES = 19;
 /** Size of LView's header. Necessary to adjust for it when setting slots.  */
-export const HEADER_OFFSET = 19;
+export const HEADER_OFFSET = 20;
 
 
 // This interface replaces the real LView interface if it is an arg or a
@@ -261,7 +262,7 @@ export interface LView extends Array<any> {
    *
    * see also:
    *   - https://hackmd.io/@mhevery/rJUJsvv9H write up of the problem
-   *   - `LContainer[ACTIVE_INDEX]` for flag which marks which `LContainer` has transplanted views.
+   *   - `LContainer[HAS_TRANSPLANTED_VIEWS]` which marks which `LContainer` has transplanted views.
    *   - `LContainer[TRANSPLANT_HEAD]` and `LContainer[TRANSPLANT_TAIL]` storage for transplanted
    *   - `LView[DECLARATION_LCONTAINER]` similar problem for queries
    *   - `LContainer[MOVED_VIEWS]` similar problem for queries
@@ -282,6 +283,14 @@ export interface LView extends Array<any> {
    * More flags for this view. See PreOrderHookFlags for more info.
    */
   [PREORDER_HOOK_FLAGS]: PreOrderHookFlags;
+
+  /**
+   * The number of direct transplanted views which need a refresh or have descendants themselves
+   * that need a refresh but have not marked their ancestors as Dirty. This tells us that during
+   * change detection we should still descend to find those children to refresh, even if the parents
+   * are not `Dirty`/`CheckAlways`.
+   */
+  [TRANSPLANTED_VIEWS_TO_REFRESH]: number;
 }
 
 /** Flags associated with an LView (saved in LView[FLAGS]) */
@@ -342,11 +351,17 @@ export const enum LViewFlags {
   IsRoot = 0b001000000000,
 
   /**
-   * Index of the current init phase on last 22 bits
+   * Whether this moved LView was needs to be refreshed at the insertion location because the
+   * declaration was dirty.
    */
-  IndexWithinInitPhaseIncrementer = 0b010000000000,
-  IndexWithinInitPhaseShift = 10,
-  IndexWithinInitPhaseReset = 0b001111111111,
+  RefreshTransplantedView = 0b0010000000000,
+
+  /**
+   * Index of the current init phase on last 21 bits
+   */
+  IndexWithinInitPhaseIncrementer = 0b0100000000000,
+  IndexWithinInitPhaseShift = 11,
+  IndexWithinInitPhaseReset = 0b0011111111111,
 }
 
 /**
@@ -684,6 +699,12 @@ export interface TView {
    * Used for directive matching, attribute bindings, local definitions and more.
    */
   consts: TConstants|null;
+
+  /**
+   * Indicates that there was an error before we managed to complete the first create pass of the
+   * view. This means that the view is likely corrupted and we should try to recover it.
+   */
+  incompleteFirstPass: boolean;
 }
 
 export const enum RootContextFlags {

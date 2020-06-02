@@ -9,14 +9,15 @@
 // below. This would normally be done inside the application `polyfills.ts` file.
 import '@angular/localize/init';
 
-import {CommonModule, registerLocaleData} from '@angular/common';
+import {CommonModule, DOCUMENT, registerLocaleData} from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 import localeRo from '@angular/common/locales/ro';
 import {computeMsgId} from '@angular/compiler';
-import {Component, ContentChild, ContentChildren, Directive, ElementRef, HostBinding, Input, LOCALE_ID, NO_ERRORS_SCHEMA, Pipe, PipeTransform, QueryList, TemplateRef, Type, ViewChild, ViewContainerRef} from '@angular/core';
+import {Component, ContentChild, ContentChildren, Directive, ElementRef, HostBinding, Input, LOCALE_ID, NO_ERRORS_SCHEMA, Pipe, PipeTransform, QueryList, RendererFactory2, TemplateRef, Type, ViewChild, ViewContainerRef, ɵsetDocument} from '@angular/core';
 import {setDelayProjection} from '@angular/core/src/render3/instructions/projection';
 import {TestBed} from '@angular/core/testing';
 import {clearTranslations, loadTranslations} from '@angular/localize';
-import {By} from '@angular/platform-browser';
+import {By, ɵDomRendererFactory2 as DomRendererFactory2} from '@angular/platform-browser';
 import {expect} from '@angular/platform-browser/testing/src/matchers';
 import {onlyInIvy} from '@angular/private/testing';
 import {BehaviorSubject} from 'rxjs';
@@ -529,6 +530,75 @@ onlyInIvy('Ivy i18n logic').describe('runtime i18n', () => {
     });
   });
 
+  describe('should work correctly with namespaces', () => {
+    beforeEach(() => {
+      function _document(): any {
+        // Tell Ivy about the global document
+        ɵsetDocument(document);
+        return document;
+      }
+
+      TestBed.configureTestingModule({
+        providers: [
+          {provide: DOCUMENT, useFactory: _document, deps: []},
+          // TODO(FW-811): switch back to default server renderer (i.e. remove the line below)
+          // once it starts to support Ivy namespace format (URIs) correctly. For now, use
+          // `DomRenderer` that supports Ivy namespace format.
+          {provide: RendererFactory2, useClass: DomRendererFactory2}
+        ],
+      });
+    });
+
+    it('should handle namespaces inside i18n blocks', () => {
+      loadTranslations({
+        [computeMsgId(
+            '{$START_TAG__XHTML_DIV} Hello ' +
+            '{$START_TAG__XHTML_SPAN}world{$CLOSE_TAG__XHTML_SPAN}{$CLOSE_TAG__XHTML_DIV}')]:
+            '{$START_TAG__XHTML_DIV} Bonjour ' +
+            '{$START_TAG__XHTML_SPAN}monde{$CLOSE_TAG__XHTML_SPAN}{$CLOSE_TAG__XHTML_DIV}'
+      });
+
+      const fixture = initWithTemplate(AppComp, `
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <foreignObject i18n>
+            <xhtml:div xmlns="http://www.w3.org/1999/xhtml">
+              Hello <span>world</span>
+            </xhtml:div>
+          </foreignObject>
+        </svg>
+      `);
+
+      const element = fixture.nativeElement;
+      expect(element.textContent.trim()).toBe('Bonjour monde');
+      expect(element.querySelector('svg').namespaceURI).toBe('http://www.w3.org/2000/svg');
+      expect(element.querySelector('div').namespaceURI).toBe('http://www.w3.org/1999/xhtml');
+      expect(element.querySelector('span').namespaceURI).toBe('http://www.w3.org/1999/xhtml');
+    });
+
+    it('should handle namespaces on i18n block containers', () => {
+      loadTranslations({
+        [computeMsgId(' Hello {$START_TAG__XHTML_SPAN}world{$CLOSE_TAG__XHTML_SPAN}')]:
+            ' Bonjour {$START_TAG__XHTML_SPAN}monde{$CLOSE_TAG__XHTML_SPAN}'
+      });
+
+      const fixture = initWithTemplate(AppComp, `
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <foreignObject>
+            <xhtml:div xmlns="http://www.w3.org/1999/xhtml" i18n>
+              Hello <span>world</span>
+            </xhtml:div>
+          </foreignObject>
+        </svg>
+      `);
+
+      const element = fixture.nativeElement;
+      expect(element.textContent.trim()).toBe('Bonjour monde');
+      expect(element.querySelector('svg').namespaceURI).toBe('http://www.w3.org/2000/svg');
+      expect(element.querySelector('div').namespaceURI).toBe('http://www.w3.org/1999/xhtml');
+      expect(element.querySelector('span').namespaceURI).toBe('http://www.w3.org/1999/xhtml');
+    });
+  });
+
   describe('should support ICU expressions', () => {
     it('with no root node', () => {
       loadTranslations({
@@ -770,7 +840,20 @@ onlyInIvy('Ivy i18n logic').describe('runtime i18n', () => {
       expect(fixture.nativeElement.innerHTML).toEqual(`<div>autre - 4<!--ICU 5--></div>`);
     });
 
-    it('should return the correct plural form for ICU expressions when using a specific locale', () => {
+    it('should return the correct plural form for ICU expressions when using "ro" locale', () => {
+      // The "ro" locale has a complex plural function that can handle muliple options
+      // (and string inputs)
+      //
+      // function plural(n: number): number {
+      //   let i = Math.floor(Math.abs(n)), v = n.toString().replace(/^[^.]*\.?/, '').length;
+      //   if (i === 1 && v === 0) return 1;
+      //   if (!(v === 0) || n === 0 ||
+      //       !(n === 1) && n % 100 === Math.floor(n % 100) && n % 100 >= 1 && n % 100 <= 19)
+      //     return 3;
+      //   return 5;
+      // }
+      //
+      // Compare this to the "es" locale in the next test
       loadTranslations({
         [computeMsgId(
             '{VAR_PLURAL, plural, =0 {no email} =one {one email} =few {a few emails} =other {lots of emails}}')]:
@@ -804,6 +887,57 @@ onlyInIvy('Ivy i18n logic').describe('runtime i18n', () => {
       fixture.componentInstance.count = 10;
       fixture.detectChanges();
       expect(fixture.nativeElement.innerHTML).toEqual('a few emails<!--ICU 2-->');
+
+      fixture.componentInstance.count = 20;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('lots of emails<!--ICU 2-->');
+
+      fixture.componentInstance.count = 0;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('no email<!--ICU 2-->');
+    });
+
+    it(`should return the correct plural form for ICU expressions when using "es" locale`, () => {
+      // The "es" locale has a simple plural function that can only handle a few options
+      // (and not string inputs)
+      //
+      // function plural(n: number): number {
+      //   if (n === 1) return 1;
+      //   return 5;
+      // }
+      //
+      // Compare this to the "ro" locale in the previous test
+      const icuMessage = '{VAR_PLURAL, plural, =0 {no email} =one ' +
+          '{one email} =few {a few emails} =other {lots of emails}}';
+      loadTranslations({[computeMsgId(icuMessage)]: icuMessage});
+      registerLocaleData(localeEs);
+      TestBed.configureTestingModule({providers: [{provide: LOCALE_ID, useValue: 'es'}]});
+      // We could also use `TestBed.overrideProvider(LOCALE_ID, {useValue: 'es'});`
+      const fixture = initWithTemplate(AppComp, `
+          {count, plural,
+            =0 {no email}
+            =one {one email}
+            =few {a few emails}
+            =other {lots of emails}
+          }`);
+
+      expect(fixture.nativeElement.innerHTML).toEqual('no email<!--ICU 2-->');
+
+      // Change detection cycle, no model changes
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('no email<!--ICU 2-->');
+
+      fixture.componentInstance.count = 3;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('lots of emails<!--ICU 2-->');
+
+      fixture.componentInstance.count = 1;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('one email<!--ICU 2-->');
+
+      fixture.componentInstance.count = 10;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.innerHTML).toEqual('lots of emails<!--ICU 2-->');
 
       fixture.componentInstance.count = 20;
       fixture.detectChanges();

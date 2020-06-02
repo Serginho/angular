@@ -9,10 +9,7 @@
 import {NgswCommChannel} from '@angular/service-worker/src/low_level';
 import {SwPush} from '@angular/service-worker/src/push';
 import {SwUpdate} from '@angular/service-worker/src/update';
-import {
-  MockServiceWorkerContainer,
-  MockServiceWorkerRegistration
-} from '@angular/service-worker/testing/mock';
+import {MockServiceWorkerContainer, MockServiceWorkerRegistration} from '@angular/service-worker/testing/mock';
 import {CacheDatabase} from '@angular/service-worker/worker/src/db-cache';
 import {Driver} from '@angular/service-worker/worker/src/driver';
 import {Manifest} from '@angular/service-worker/worker/src/manifest';

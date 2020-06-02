@@ -1821,11 +1821,15 @@ describe('Integration', () => {
          expect(native.getAttribute('href')).toEqual('/home');
        }));
 
-    it('should not throw when commands is null', fakeAsync(() => {
+    it('should not throw when commands is null or undefined', fakeAsync(() => {
          @Component({
            selector: 'someCmp',
-           template:
-               `<router-outlet></router-outlet><a [routerLink]="null">Link</a><button [routerLink]="null">Button</button>`
+           template: `<router-outlet></router-outlet>
+               <a [routerLink]="null">Link</a>
+               <button [routerLink]="null">Button</button>
+               <a [routerLink]="undefined">Link</a>
+               <button [routerLink]="undefined">Button</button>
+               `
          })
          class CmpWithLink {
          }
@@ -1835,10 +1839,12 @@ describe('Integration', () => {
 
          let fixture: ComponentFixture<CmpWithLink> = createRoot(router, CmpWithLink);
          router.resetConfig([{path: 'home', component: SimpleCmp}]);
-         const anchor = fixture.nativeElement.querySelector('a');
-         const button = fixture.nativeElement.querySelector('button');
-         expect(() => anchor.click()).not.toThrow();
-         expect(() => button.click()).not.toThrow();
+         const anchors = fixture.nativeElement.querySelectorAll('a');
+         const buttons = fixture.nativeElement.querySelectorAll('button');
+         expect(() => anchors[0].click()).not.toThrow();
+         expect(() => anchors[1].click()).not.toThrow();
+         expect(() => buttons[0].click()).not.toThrow();
+         expect(() => buttons[1].click()).not.toThrow();
        }));
 
     it('should update hrefs when query params or fragment change', fakeAsync(() => {
@@ -3114,6 +3120,47 @@ describe('Integration', () => {
              expect(location.path()).toEqual('/team/33/user/fedor');
            })));
       });
+
+      it('should use correct component to deactivate forChild route',
+         fakeAsync(inject(
+             [Router, Location, NgModuleFactoryLoader],
+             (router: Router, location: Location, loader: SpyNgModuleFactoryLoader) => {
+               @Component({selector: 'admin', template: ''})
+               class AdminComponent {
+               }
+
+               @NgModule({
+                 declarations: [AdminComponent],
+                 imports: [RouterModule.forChild([{
+                   path: '',
+                   component: AdminComponent,
+                   canDeactivate: ['RecordingDeactivate'],
+                 }])],
+               })
+               class LazyLoadedModule {
+               }
+
+               loader.stubbedModules = {lazy: LazyLoadedModule};
+               const fixture = createRoot(router, RootCmp);
+
+               router.resetConfig([
+                 {
+                   path: 'a',
+                   component: WrapperCmp,
+                   children: [
+                     {path: '', pathMatch: 'full', loadChildren: 'lazy'},
+                   ]
+                 },
+                 {path: 'b', component: SimpleCmp},
+               ]);
+
+               router.navigateByUrl('/a');
+               advance(fixture);
+               router.navigateByUrl('/b');
+               advance(fixture);
+
+               expect(log[0].component).toBeAnInstanceOf(AdminComponent);
+             })));
 
       it('should not create a route state if navigation is canceled',
          fakeAsync(inject([Router, Location], (router: Router, location: Location) => {

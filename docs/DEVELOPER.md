@@ -89,6 +89,7 @@ benefit from Bazel's capability to do incremental builds.
 All the tests are executed on our Continuous Integration infrastructure. PRs can only be
 merged if the code is formatted properly and all tests are passing.
 
+<a name="formatting-your-source-code">
 <a name="clang-format"></a>
 ## Formatting your source code
 
@@ -96,8 +97,9 @@ Angular uses [clang-format](http://clang.llvm.org/docs/ClangFormat.html) to form
 If the source code is not properly formatted, the CI will fail and the PR cannot be merged.
 
 You can automatically format your code by running:
-- `yarn gulp format`: re-format only edited source code.
-- `yarn gulp format:all`: format _all_ source code
+- `yarn ng-dev format changed [shaOrRef]`: format only files changed since the provided sha/ref. `shaOrRef` defaults to `master`.
+- `yarn ng-dev format all`: format _all_ source code
+- `yarn ng-dev format files <files..>`: format only provided files
 
 A better way is to set up your IDE to format the changed file on each file save.
 

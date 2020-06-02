@@ -32,8 +32,8 @@ var_4_win: &cache_key_win_fallback v6-angular-win-node-12-{{ checksum ".bazelver
 
 # Cache key for the `components-repo-unit-tests` job. **Note** when updating the SHA in the
 # cache keys also update the SHA for the "COMPONENTS_REPO_COMMIT" environment variable.
-var_5: &components_repo_unit_tests_cache_key v6-angular-components-598db096e668aa7e9debd56eedfd127b7a55e371
-var_6: &components_repo_unit_tests_cache_key_fallback v6-angular-components-
+var_5: &components_repo_unit_tests_cache_key v7-angular-components-caad0b54ed41949f0ee529c152508749875bc9af
+var_6: &components_repo_unit_tests_cache_key_fallback v7-angular-components-
 
 # Workspace initially persisted by the `setup` job, and then enhanced by `build-npm-packages` and
 # `build-ivy-npm-packages`.
@@ -272,13 +272,8 @@ jobs:
       - custom_attach_workspace
       - init_environment
 
-      - run: 'yarn bazel:format -mode=check ||
-              (echo "BUILD files not formatted. Please run ''yarn bazel:format''" ; exit 1)'
-      # Run the skylark linter to check our Bazel rules
-      - run: 'yarn bazel:lint ||
-              (echo -e "\n.bzl files have lint errors. Please run ''yarn bazel:lint-fix''"; exit 1)'
-
-      - run: yarn -s lint --branch $CI_GIT_BASE_REVISION
+      - run: yarn -s tslint
+      - run: yarn -s ng-dev format changed $CI_GIT_BASE_REVISION --check
       - run: yarn -s ts-circular-deps:check
       - run: yarn -s ng-dev pullapprove verify
       - run: yarn -s ng-dev commit-message validate-range --range $CI_COMMIT_RANGE
@@ -389,10 +384,6 @@ jobs:
       - custom_attach_workspace
       - init_environment
       - install_chrome_libs
-        # Compile dependencies to ivy
-        # Running `ngcc` here (instead of implicitly via `ng build`) allows us to take advantage of
-        # the parallel, async mode speed-up (~20-25s on CI).
-      - run: yarn --cwd aio ngcc --properties es2015
         # Build aio
       - run: yarn --cwd aio build --progress=false
         # Lint the code

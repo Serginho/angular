@@ -60,25 +60,23 @@ export enum DriverReadyState {
 
 export class Driver implements Debuggable, UpdateSource {
   /**
-   * Tracks the current readiness condition under which the SW is operating.
-   * This controls whether the SW attempts to respond to some or all requests.
+   * Tracks the current readiness condition under which the SW is operating. This controls
+   * whether the SW attempts to respond to some or all requests.
    */
   state: DriverReadyState = DriverReadyState.NORMAL;
   private stateMessage: string = '(nominal)';
 
   /**
-   * Tracks whether the SW is in an initialized state or not. Before
-   * initialization, it's not legal to respond to requests.
+   * Tracks whether the SW is in an initialized state or not. Before initialization,
+   * it's not legal to respond to requests.
    */
   initialized: Promise<void>|null = null;
 
   /**
-   * Maps client IDs to the manifest hash of the application version being used
-   * to serve them. If a client ID is not present here, it has not yet been
-   * assigned a version.
+   * Maps client IDs to the manifest hash of the application version being used to serve
+   * them. If a client ID is not present here, it has not yet been assigned a version.
    *
-   * If a ManifestHash appears here, it is also present in the `versions` map
-   * below.
+   * If a ManifestHash appears here, it is also present in the `versions` map below.
    */
   private clientVersionMap = new Map<ClientId, ManifestHash>();
 
@@ -108,8 +106,8 @@ export class Driver implements Debuggable, UpdateSource {
   private loggedInvalidOnlyIfCachedRequest: boolean = false;
 
   /**
-   * A scheduler which manages a queue of tasks that need to be executed when
-   * the SW is not doing any other work (not processing any other requests).
+   * A scheduler which manages a queue of tasks that need to be executed when the SW is
+   * not doing any other work (not processing any other requests).
    */
   idle: IdleScheduler;
 
@@ -194,8 +192,7 @@ export class Driver implements Debuggable, UpdateSource {
    * The handler for fetch events.
    *
    * This is the transition point between the synchronous event handler and the
-   * asynchronous execution that eventually resolves for respondWith() and
-   * waitUntil().
+   * asynchronous execution that eventually resolves for respondWith() and waitUntil().
    */
   private onFetch(event: FetchEvent): void {
     const req = event.request;
@@ -806,13 +803,8 @@ export class Driver implements Debuggable, UpdateSource {
 
   /**
    * Retrieve a copy of the latest manifest from the server.
-<<<<<<< HEAD
-   * Return `null` if `ignoreOfflineError` is true (default: false) and the
-   * server or client are offline (detected as response status 504).
-=======
    * Return `null` if `ignoreOfflineError` is true (default: false) and the server or client are
    * offline (detected as response status 503 (service unavailable) or 504 (gateway timeout)).
->>>>>>> master
    */
   private async fetchLatestManifest(ignoreOfflineError?: false): Promise<Manifest>;
   private async fetchLatestManifest(ignoreOfflineError: true): Promise<Manifest|null>;
@@ -844,10 +836,9 @@ export class Driver implements Debuggable, UpdateSource {
   }
 
   /**
-   * Schedule the SW's attempt to reach a fully prefetched state for the given
-   * AppVersion when the SW is not busy and has connectivity. This returns a
-   * Promise which must be awaited, as under some conditions the AppVersion
-   * might be initialized immediately.
+   * Schedule the SW's attempt to reach a fully prefetched state for the given AppVersion
+   * when the SW is not busy and has connectivity. This returns a Promise which must be
+   * awaited, as under some conditions the AppVersion might be initialized immediately.
    */
   private async scheduleInitialization(appVersion: AppVersion): Promise<void> {
     const initialize = async () => {
@@ -1063,11 +1054,9 @@ export class Driver implements Debuggable, UpdateSource {
   }
 
   /**
-   * Delete caches that were used by older versions of
-   * `@angular/service-worker` to avoid running into storage quota limitations
-   * imposed by browsers.
-   * (Since at this point the SW has claimed all clients, it is safe to remove
-   * those caches.)
+   * Delete caches that were used by older versions of `@angular/service-worker` to avoid running
+   * into storage quota limitations imposed by browsers.
+   * (Since at this point the SW has claimed all clients, it is safe to remove those caches.)
    */
   async cleanupOldSwCaches(): Promise<void> {
     const cacheNames = await this.scope.caches.keys();
@@ -1076,8 +1065,8 @@ export class Driver implements Debuggable, UpdateSource {
   }
 
   /**
-   * Determine if a specific version of the given resource is cached anywhere
-   * within the SW, and fetch it if so.
+   * Determine if a specific version of the given resource is cached anywhere within the SW,
+   * and fetch it if so.
    */
   lookupResourceWithHash(url: string, hash: string): Promise<Response|null> {
     return Array

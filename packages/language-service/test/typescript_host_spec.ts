@@ -94,7 +94,7 @@ describe('TypeScriptServiceHost', () => {
     const tsLS = ts.createLanguageService(tsLSHost);
     const ngLSHost = new TypeScriptServiceHost(tsLSHost, tsLS);
     const templates = ngLSHost.getTemplates('/app/parsing-cases.ts');
-    expect(templates.length).toBe(5);
+    expect(templates.length).toBe(1);
   });
 
   it('should be able to find external template', () => {
@@ -175,5 +175,44 @@ describe('TypeScriptServiceHost', () => {
     // But, analyzed modules should remain the same because none of the source
     // files have changed.
     expect(newModules).toBe(oldModules);
+  });
+
+  it('should not reload @angular/core on changes', () => {
+    const tsLSHost = new MockTypescriptHost(['/app/main.ts']);
+    const tsLS = ts.createLanguageService(tsLSHost);
+    const ngLSHost = new TypeScriptServiceHost(tsLSHost, tsLS);
+    const oldModules = ngLSHost.getAnalyzedModules();
+    const ngCore = '/node_modules/@angular/core/core.d.ts';
+    const originalContent = tsLSHost.readFile(ngCore);
+    const oldVersion = tsLSHost.getScriptVersion(ngCore);
+    tsLSHost.override(ngCore, originalContent + '\n\n');
+    const newVersion = tsLSHost.getScriptVersion(ngCore);
+    expect(newVersion).not.toBe(oldVersion);
+    const newModules = ngLSHost.getAnalyzedModules();
+    // Had @angular/core been invalidated, we'd get a different instance of
+    // analyzed modules, with one module missing - ApplicationModule
+    // The absence of this module will cause language service to stop working.
+    expect(newModules).toBe(oldModules);
+    const ApplicationModule =
+        newModules.ngModules.find(m => m.type.reference.name === 'ApplicationModule');
+    expect(ApplicationModule).toBeDefined();
+  });
+
+  it('should reload @angular/common on changes', () => {
+    const tsLSHost = new MockTypescriptHost(['/app/main.ts']);
+    const tsLS = ts.createLanguageService(tsLSHost);
+    const ngLSHost = new TypeScriptServiceHost(tsLSHost, tsLS);
+    const oldModules = ngLSHost.getAnalyzedModules();
+    const ngCommon = '/node_modules/@angular/common/common.d.ts';
+    const originalContent = tsLSHost.readFile(ngCommon);
+    const oldVersion = tsLSHost.getScriptVersion(ngCommon);
+    tsLSHost.override(ngCommon, originalContent + '\n\n');
+    const newVersion = tsLSHost.getScriptVersion(ngCommon);
+    expect(newVersion).not.toBe(oldVersion);
+    const newModules = ngLSHost.getAnalyzedModules();
+    // We get a new instance of analyzed modules
+    expect(newModules).not.toBe(oldModules);
+    // But the content should be exactly the same
+    expect(newModules).toEqual(oldModules);
   });
 });

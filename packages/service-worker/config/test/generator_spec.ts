@@ -146,7 +146,6 @@ describe('Generator', () => {
       index: '/index.html',
     });
 
-
     expect(config).toEqual({
       configVersion: 1,
       timestamp: 1234567890123,

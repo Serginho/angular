@@ -13,9 +13,8 @@ import * as tss from 'typescript/lib/tsserverlibrary';
 import {createLanguageService} from './language_service';
 import {ReflectorHost} from './reflector_host';
 import {ExternalTemplate, InlineTemplate} from './template';
+import {findTightestNode, getClassDeclFromDecoratorProp, getDirectiveClassLike, getPropertyAssignmentFromValue} from './ts_utils';
 import {AstResult, Declaration, DeclarationError, DiagnosticMessageChain, LanguageService, LanguageServiceHost, Span, TemplateSource} from './types';
-import {findTightestNode, getClassDeclFromDecoratorProp, getDirectiveClassLike, getPropertyAssignmentFromValue} from './utils';
-
 
 /**
  * Create a `LanguageServiceHost`
@@ -217,7 +216,18 @@ export class TypeScriptServiceHost implements LanguageServiceHost {
 
     // Check if any source files have been added / changed since last computation.
     const seen = new Set<string>();
+    const ANGULAR_CORE = '@angular/core';
+    const corePath = this.reflectorHost.moduleNameToFileName(ANGULAR_CORE);
     for (const {fileName} of program.getSourceFiles()) {
+      // If `@angular/core` is edited, the language service would have to be
+      // restarted, so ignore changes to `@angular/core`.
+      // When the StaticReflector is initialized at startup, it loads core
+      // symbols from @angular/core by calling initializeConversionMap(). This
+      // is only done once. If the file is invalidated, some of the core symbols
+      // will be lost permanently.
+      if (fileName === corePath) {
+        continue;
+      }
       seen.add(fileName);
       const version = this.tsLsHost.getScriptVersion(fileName);
       const lastVersion = this.fileVersions.get(fileName);
@@ -359,8 +369,8 @@ export class TypeScriptServiceHost implements LanguageServiceHost {
     if (!tss.isStringLiteralLike(node)) {
       return;
     }
-    const tmplAsgn = getPropertyAssignmentFromValue(node);
-    if (!tmplAsgn || tmplAsgn.name.getText() !== 'template') {
+    const tmplAsgn = getPropertyAssignmentFromValue(node, 'template');
+    if (!tmplAsgn) {
       return;
     }
     const classDecl = getClassDeclFromDecoratorProp(tmplAsgn);

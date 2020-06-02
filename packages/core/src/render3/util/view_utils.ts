@@ -8,12 +8,12 @@
 
 import {assertDataInRange, assertDefined, assertDomNode, assertGreaterThan, assertLessThan} from '../../util/assert';
 import {assertTNodeForLView} from '../assert';
-import {ACTIVE_INDEX, ActiveIndexFlag, LContainer, TYPE} from '../interfaces/container';
+import {LContainer, TYPE} from '../interfaces/container';
 import {LContext, MONKEY_PATCH_KEY_NAME} from '../interfaces/context';
 import {TConstants, TNode} from '../interfaces/node';
 import {isProceduralRenderer, RNode} from '../interfaces/renderer';
 import {isLContainer, isLView} from '../interfaces/type_checks';
-import {FLAGS, HEADER_OFFSET, HOST, LView, LViewFlags, PARENT, PREORDER_HOOK_FLAGS, RENDERER, TData, TView} from '../interfaces/view';
+import {FLAGS, HEADER_OFFSET, HOST, LView, LViewFlags, PARENT, PREORDER_HOOK_FLAGS, RENDERER, TData, TRANSPLANTED_VIEWS_TO_REFRESH, TView} from '../interfaces/view';
 
 
 
@@ -188,10 +188,22 @@ export function resetPreOrderHookFlags(lView: LView) {
   lView[PREORDER_HOOK_FLAGS] = 0;
 }
 
-export function getLContainerActiveIndex(lContainer: LContainer) {
-  return lContainer[ACTIVE_INDEX] >> ActiveIndexFlag.SHIFT;
-}
-
-export function setLContainerActiveIndex(lContainer: LContainer, index: number) {
-  lContainer[ACTIVE_INDEX] = index << ActiveIndexFlag.SHIFT;
+/**
+ * Updates the `TRANSPLANTED_VIEWS_TO_REFRESH` counter on the `LContainer` as well as the parents
+ * whose
+ *  1. counter goes from 0 to 1, indicating that there is a new child that has a view to refresh
+ *  or
+ *  2. counter goes from 1 to 0, indicating there are no more descendant views to refresh
+ */
+export function updateTransplantedViewCount(lContainer: LContainer, amount: 1|- 1) {
+  lContainer[TRANSPLANTED_VIEWS_TO_REFRESH] += amount;
+  let viewOrContainer: LView|LContainer = lContainer;
+  let parent: LView|LContainer|null = lContainer[PARENT];
+  while (parent !== null &&
+         ((amount === 1 && viewOrContainer[TRANSPLANTED_VIEWS_TO_REFRESH] === 1) ||
+          (amount === -1 && viewOrContainer[TRANSPLANTED_VIEWS_TO_REFRESH] === 0))) {
+    parent[TRANSPLANTED_VIEWS_TO_REFRESH] += amount;
+    viewOrContainer = parent;
+    parent = parent[PARENT];
+  }
 }

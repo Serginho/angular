@@ -7,7 +7,7 @@
  */
 
 import {Injectable} from '@angular/core';
-import {NEVER, Observable, Subject, merge} from 'rxjs';
+import {merge, NEVER, Observable, Subject} from 'rxjs';
 import {map, switchMap, take} from 'rxjs/operators';
 
 import {ERR_SW_NOT_SUPPORTED, NgswCommChannel, PushEvent} from './low_level';
@@ -107,11 +107,12 @@ export class SwPush {
    *
    * [Mozilla Notification]: https://developer.mozilla.org/en-US/docs/Web/API/Notification
    */
-  readonly notificationClicks: Observable < {
-    action: string;
-    notification: NotificationOptions&{ title: string }
-  }
-  > ;
+  readonly notificationClicks: Observable<{
+    action: string; notification: NotificationOptions &
+        {
+          title: string
+        }
+  }>;
 
   /**
    * Emits the currently active
@@ -124,10 +125,12 @@ export class SwPush {
    * True if the Service Worker is enabled (supported by the browser and enabled via
    * `ServiceWorkerModule`).
    */
-  get isEnabled(): boolean { return this.sw.isEnabled; }
+  get isEnabled(): boolean {
+    return this.sw.isEnabled;
+  }
 
   // TODO(issue/24571): remove '!'.
-  private pushManager !: Observable<PushManager>;
+  private pushManager!: Observable<PushManager>;
   private subscriptionChanges = new Subject<PushSubscription|null>();
 
   constructor(private sw: NgswCommChannel) {
@@ -174,7 +177,7 @@ export class SwPush {
       return Promise.reject(new Error(ERR_SW_NOT_SUPPORTED));
     }
 
-    const doUnsubscribe = (sub: PushSubscription | null) => {
+    const doUnsubscribe = (sub: PushSubscription|null) => {
       if (sub === null) {
         throw new Error('Not subscribed to push notifications.');
       }
@@ -191,5 +194,7 @@ export class SwPush {
     return this.subscription.pipe(take(1), switchMap(doUnsubscribe)).toPromise();
   }
 
-  private decodeBase64(input: string): string { return atob(input); }
+  private decodeBase64(input: string): string {
+    return atob(input);
+  }
 }

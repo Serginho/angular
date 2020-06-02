@@ -189,7 +189,7 @@ groups:
       - *can-be-global-approved
       - *can-be-global-docs-approved
       - >
-        contains_any_globs(files, [
+        contains_any_globs(files.exclude('packages/compiler-cli/ngcc/**'), [
           'packages/compiler/**',
           'packages/examples/compiler/**',
           'packages/compiler-cli/**',
@@ -197,10 +197,6 @@ groups:
           'aio/content/guide/aot-compiler.md',
           'aio/content/guide/aot-metadata-errors.md',
           'aio/content/guide/template-typecheck.md '
-          ])
-      - >
-        not contains_any_globs(files, [
-          'packages/compiler-cli/ngcc/**'
           ])
     reviewers:
       users:
@@ -217,16 +213,29 @@ groups:
     conditions:
       - *can-be-global-approved
       - *can-be-global-docs-approved
-      - >
-        contains_any_globs(files, [
-          'packages/compiler-cli/ngcc/**'
-          ])
+      - files.include('packages/compiler-cli/ngcc/**')
     reviewers:
       users:
         - alxhub
         - gkalpak
         - JoostK
         - petebacondarwin
+
+
+  # =========================================================
+  #  Framework: Migrations
+  # =========================================================
+  fw-migrations:
+    conditions:
+      - *can-be-global-approved
+      - *can-be-global-docs-approved
+      - files.include("packages/core/schematics/**")
+    reviewers:
+      users:
+        - alxhub
+        - crisbeto
+        - devversion
+        - kara
 
 
   # =========================================================
@@ -237,7 +246,7 @@ groups:
       - *can-be-global-approved
       - *can-be-global-docs-approved
       - >
-        contains_any_globs(files, [
+        contains_any_globs(files.exclude("packages/core/schematics/**"), [
           'packages/core/**',
           'packages/examples/core/**',
           'packages/common/**',
@@ -342,6 +351,7 @@ groups:
       users:
         - alxhub
         - AndrewKushnir
+        - atscott
         - kara
         - mhevery
         - pkozlowski-opensource
@@ -496,7 +506,7 @@ groups:
   # =========================================================
   #  Framework: Service Worker
   # =========================================================
-  fw-server-worker:
+  fw-service-worker:
     conditions:
       - *can-be-global-approved
       - *can-be-global-docs-approved
@@ -558,7 +568,7 @@ groups:
       - *can-be-global-approved
       - *can-be-global-docs-approved
       - >
-        contains_any_globs(files, [
+        contains_any_globs(files.exclude('packages/compiler-cli/**'), [
           '**/testing/**',
           'aio/content/guide/testing.md',
           'aio/content/examples/testing/**',
@@ -566,6 +576,7 @@ groups:
           ])
     reviewers:
       users:
+        - AndrewKushnir
         - IgorMinar
         - kara
         - pkozlowski-opensource
@@ -766,9 +777,9 @@ groups:
           ])
     reviewers:
       users:
+        - aikidave
         - IgorMinar
         - StephenFluin
-
 
   # =========================================================
   #  Docs: Observables
@@ -848,7 +859,7 @@ groups:
           'aio/content/images/guide/deployment/**',
           'aio/content/guide/file-structure.md',
           'aio/content/guide/ivy.md',
-          'aio/content/guide/web-worker.md'
+          'aio/content/guide/web-worker.md',
           'aio/content/guide/workspace-config.md',
           ])
     reviewers:
@@ -936,7 +947,7 @@ groups:
     conditions:
       - *can-be-global-approved
       - >
-        contains_any_globs(files, [
+        contains_any_globs(files.exclude("CHANGELOG.md"), [
           '*',
           '.circleci/**',
           '.devcontainer/**',
@@ -1008,6 +1019,7 @@ groups:
       - >
         contains_any_globs(files, [
           'goldens/public-api/**',
+          'CHANGELOG.md',
           'docs/NAMING.md',
           'aio/content/guide/glossary.md',
           'aio/content/guide/styleguide.md',
@@ -1017,6 +1029,7 @@ groups:
     reviewers:
       users:
         - IgorMinar
+        - kara
 
 
   # ================================================
@@ -1027,8 +1040,7 @@ groups:
       - *can-be-global-approved
       - >
         contains_any_globs(files, [
-          'aio/scripts/_payload-limits.json',
-          'integration/_payload-limits.json'
+          'goldens/size-tracking/**'
           ])
     reviewers:
       users:
@@ -1044,7 +1056,7 @@ groups:
       - *can-be-global-approved
       - >
         contains_any_globs(files, [
-          'goldens/packages-circular-deps.json'
+          'goldens/circular-deps/packages.json'
         ])
     reviewers:
       users:
